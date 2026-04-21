@@ -42,19 +42,13 @@ import bg8 from "./assets/bg8.png";
 const backgrounds = [bg1, bg3, bg4, bg8];
 
 // ─── Networking / API URL ────────────────────────────────────
-// Detect the API URL: 
-// 1. From environment variable (for production/deployment)
-// 2. From the current window location (smart fallback for network access)
 const getApiUrl = () => {
   if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
   
-  // Fallback: If accessed via IP (e.g. 192.168.1.5:3000), use that IP with port 5001
   const hostname = window.location.hostname;
-  if (hostname !== 'localhost') {
-    return `http://${hostname}:5001/api`;
-  }
-  
-  return "http://localhost:5001/api";
+  return hostname !== 'localhost' 
+    ? `http://${hostname}:5001/api` 
+    : "http://localhost:5001/api";
 };
 
 axios.defaults.baseURL = getApiUrl();
