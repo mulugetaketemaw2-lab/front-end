@@ -4,111 +4,70 @@ import { toast } from "react-hot-toast";
 import MemberMessaging from "./MemberMessaging";
 
 const AnnouncementsFeed = ({ announcements, loading, onDelete, onToggleStatus, currentUserRole, activeFilter, currentUserId }) => {
-  if (loading) return <div className="mt-4 p-4 text-center">🔄 Loading Announcements...</div>;
+  if (loading) return <div className="mt-8 p-6 text-center text-slate-500 font-medium animate-pulse">🔄 Loading Announcements...</div>;
   
   const isAdmin = ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(currentUserRole);
   
   return (
-    <div className="announcements-feed-section mt-4 mb-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', color: '#1e293b' }}>
+    <div className="announcements-feed-section my-8">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl font-black text-slate-800 m-0 flex items-center gap-2">
           {activeFilter === 'executive' ? '🎖️ የአመራር ዜናዎች (Executive News)' : 
            activeFilter === 'member' ? '👥 የአባላት ዜናዎች (Member News)' : 
            '📢 ዜናዎች እና ማስታወቂያዎች (News & Announcements)'}
         </h3>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {announcements
           .filter(post => activeFilter === 'all' ? true : post.targetGroup === activeFilter)
           .length === 0 ? (
-          <div className="no-data-text" style={{ gridColumn: '1 / -1', padding: '40px' }}>
-            <span style={{ fontSize: '2rem', display: 'block', marginBottom: '10px' }}>📭</span>
-            {activeFilter === 'all' ? 'ምንም አዲስ ማስታወቂያ የለም።' : `ምንም የ${activeFilter === 'executive' ? 'አመራር' : 'አባላት'} ማስታወቂያ የለም።`}
+          <div className="col-span-full py-16 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+            <span className="text-5xl block mb-4">📭</span>
+            <p className="text-slate-500 font-medium">
+              {activeFilter === 'all' ? 'ምንም አዲስ ማስታወቂያ የለም።' : `ምንም የ${activeFilter === 'executive' ? 'አመራር' : 'አባላት'} ማስታወቂያ የለም።`}
+            </p>
           </div>
         ) : (
           announcements
             .filter(post => activeFilter === 'all' ? true : post.targetGroup === activeFilter)
             .map((post) => (
-            <div key={post._id} className="card" style={{ 
-              borderRadius: '16px', 
-              boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-              overflow: 'hidden',
-              background: post.isActive === false ? '#f8fafc' : '#fff',
-              border: post.isActive === false ? '1px dashed #cbd5e1' : 'none',
-              transition: 'transform 0.2s ease',
-              position: 'relative',
-              opacity: post.isActive === false ? 0.8 : 1
-            }}>
+            <div key={post._id} className={`relative group rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${post.isActive === false ? 'bg-slate-50 border border-dashed border-slate-300 opacity-80' : 'bg-white border border-slate-100 shadow-sm'}`}>
               {(isAdmin || post.sender?.toString() === currentUserId?.toString()) && (
-                <div style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 10 }}>
+                <div className="absolute top-4 right-4 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onToggleStatus(post._id); }} 
-                    style={{ 
-                      background: post.isActive === false ? '#dcfce7' : '#f1f5f9', 
-                      color: post.isActive === false ? '#166534' : '#475569', 
-                      border: 'none', borderRadius: '8px', padding: '6px 12px',
-                      fontSize: '12px', fontWeight: '800', cursor: 'pointer'
-                    }}>
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${post.isActive === false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     {post.isActive === false ? '👁️ Unhide' : '👁️ Hide'}
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); onDelete(post._id); }} 
-                    style={{ 
-                      background: '#fee2e2', color: '#ef4444', 
-                      border: 'none', borderRadius: '8px', padding: '6px 12px',
-                      fontSize: '12px', fontWeight: '800', cursor: 'pointer'
-                    }}>
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors">
                     🗑️ Delete
                   </button>
                 </div>
               )}
-              <div style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ 
-                      fontSize: '11px', 
-                      fontWeight: '700', 
-                      padding: '4px 10px', 
-                      borderRadius: '50px',
-                      background: post.targetGroup === 'member' ? '#eef2ff' : '#fef2f2',
-                      color: post.targetGroup === 'member' ? '#4f46e5' : '#ef4444',
-                      textTransform: 'uppercase'
-                    }}>
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className={`text-[10px] font-black px-3 py-1 rounded-full tracking-wider uppercase ${post.targetGroup === 'member' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}`}>
                       {post.targetGroup === 'member' ? '👥 ALL MEMBERS' : '🎖️ EXECUTIVES ONLY'}
                     </span>
-                    <span style={{ 
-                      fontSize: '11px', 
-                      fontWeight: '800', 
-                      padding: '4px 10px', 
-                      borderRadius: '50px',
-                      background: ['super_admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(post.senderRole) ? '#fff7ed' : '#ecfdf5',
-                      color: ['super_admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(post.senderRole) ? '#ea580c' : '#059669',
-                    }}>
-                      {['super_admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(post.senderRole) ? '🏢 ከጽህፈት ቤት (Office)' : '💼 ከስራ አስፈጻሚ (Executive)'}
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full tracking-wider ${['super_admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(post.senderRole) ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                      {['super_admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(post.senderRole) ? '🏢 Office' : '💼 Executive'}
                     </span>
                   </div>
-                  <small style={{ color: '#94a3b8' }}>{new Date(post.displayDate || post.createdAt).toLocaleDateString()}</small>
                 </div>
                 
-                <h4 style={{ margin: '0 0 10px', fontSize: '1.1rem', fontWeight: '800', color: '#1e293b' }}>{post.title}</h4>
+                <h4 className="text-lg font-black text-slate-800 mb-3 line-clamp-2">{post.title}</h4>
                 {post.message && (
-                  <p style={{ 
-                    margin: '0 0 15px', 
-                    fontSize: '0.95rem', 
-                    color: '#475569', 
-                    whiteSpace: 'pre-wrap',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap line-clamp-3 mb-4 leading-relaxed">
                     {post.message}
                   </p>
                 )}
 
                 {post.attachments && post.attachments.length > 0 && (
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
                     {post.attachments.map((file, idx) => (
                       <div key={idx} onClick={(e) => {
                         e.stopPropagation();
@@ -116,27 +75,26 @@ const AnnouncementsFeed = ({ announcements, loading, onDelete, onToggleStatus, c
                         link.href = file.data;
                         link.download = file.fileName || `attachment-${idx}`;
                         link.click();
-                      }} style={{
-                        width: '40px', height: '40px', borderRadius: '8px', 
-                        background: '#f1f5f9', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', fontSize: '20px'
-                      }} title={`Download ${file.fileName || 'file'}`}>
+                      }} className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 flex items-center justify-center text-xl cursor-pointer transition-colors shadow-sm" title={`Download ${file.fileName || 'file'}`}>
                         {file.type === 'photo' ? '🖼️' : '📄'}
                       </div>
                     ))}
-                    <span style={{ fontSize: '12px', color: '#64748b', alignSelf: 'center' }}>
+                    <span className="text-xs font-semibold text-slate-400 self-center ml-2">
                       {post.attachments.length} attachment(s)
                     </span>
                   </div>
                 )}
                 
-                <div style={{ marginTop: '15px', borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#4f46e5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
+                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-black shadow-md">
                     {post.senderName ? post.senderName[0] : 'U'}
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>
-                    {post.senderName} ({['super_admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(post.senderRole) ? 'ጽህፈት ቤት (Office)' : 'ስራ አስፈጻሚ (Executive)'})
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-700">{post.senderName}</span>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {new Date(post.displayDate || post.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -546,103 +504,117 @@ const Dashboard = ({ user, setView }) => {
 
       {/* 4. Messaging Section */}
       {isMember && (
-        <div style={{ marginTop: '20px', marginBottom: '50px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontWeight: '900', fontSize: '1.4rem', color: '#1e293b' }}>💬 የእኔ መልዕክቶች (My Messages)</h3>
+        <div className="mt-8 mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="m-0 font-black text-2xl text-slate-800 flex items-center gap-2">💬 የእኔ መልዕክቶች <span className="text-slate-400 text-lg font-semibold">(My Messages)</span></h3>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* INBOX: FROM OFFICE */}
-            <div className="card" style={{ padding: '20px', borderRadius: '20px', border: '1px solid #eef2ff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                 <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#4f46e5', fontWeight: '900' }}>📥 ከጽህፈት ቤት (From Office)</h4>
-                 <span style={{ fontSize: '1.2rem' }}>🏢</span>
+            <div className="bg-gradient-to-b from-indigo-50/50 to-white p-6 rounded-3xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-center mb-5">
+                 <h4 className="m-0 text-sm text-indigo-700 font-black flex items-center gap-2">
+                   <span className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-lg shadow-sm">📥</span>
+                   ከጽህፈት ቤት
+                 </h4>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-3">
                 {messages
                   .filter(m => (m.sender?.toString() !== (user?._id || user?.id)?.toString()) && ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(m.senderRole))
                   .slice(0, 3)
                   .map(m => (
-                    <div key={m._id} style={{ padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-                      <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#1e293b', marginBottom: '4px' }}>{m.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{new Date(m.createdAt).toLocaleDateString()} • {m.isRead ? '✓ Seen' : '✓ Delivered'}</div>
+                    <div key={m._id} className="p-4 bg-white rounded-2xl border border-indigo-50 shadow-sm hover:border-indigo-200 transition-all hover:-translate-y-0.5 cursor-pointer group">
+                      <div className="font-bold text-sm text-slate-800 mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors">{m.title}</div>
+                      <div className="text-[11px] font-semibold text-slate-400 flex justify-between items-center">
+                        <span>{new Date(m.createdAt).toLocaleDateString()}</span>
+                        <span className={`px-2 py-0.5 rounded-full ${m.isRead ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'}`}>{m.isRead ? '✓ Seen' : '● New'}</span>
+                      </div>
                     </div>
                   ))}
                 {messages.filter(m => (m.sender?.toString() !== (user?._id || user?.id)?.toString()) && ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(m.senderRole)).length === 0 && (
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', margin: '20px 0' }}>ምንም መልዕክት የለም (No messages)</p>
+                  <p className="text-center text-xs font-semibold text-slate-400 py-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">ምንም መልዕክት የለም</p>
                 )}
               </div>
             </div>
 
             {/* INBOX: FROM DEPT */}
-            <div className="card" style={{ padding: '20px', borderRadius: '20px', border: '1px solid #f0fdf4' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                 <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#10b981', fontWeight: '900' }}>📥 ከክፍሌ (From Dept)</h4>
-                 <span style={{ fontSize: '1.2rem' }}>💼</span>
+            <div className="bg-gradient-to-b from-emerald-50/50 to-white p-6 rounded-3xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-center mb-5">
+                 <h4 className="m-0 text-sm text-emerald-700 font-black flex items-center gap-2">
+                   <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-lg shadow-sm">📥</span>
+                   ከክፍሌ
+                 </h4>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-3">
                 {messages
                   .filter(m => (m.sender?.toString() !== (user?._id || user?.id)?.toString()) && !['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(m.senderRole))
                   .slice(0, 3)
                   .map(m => (
-                    <div key={m._id} style={{ padding: '12px', background: '#fcfdfd', borderRadius: '12px', border: '1px solid #f0fdf4' }}>
-                      <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#1e293b', marginBottom: '4px' }}>{m.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{new Date(m.createdAt).toLocaleDateString()} • {m.isRead ? '✓ Seen' : '✓ Delivered'}</div>
+                    <div key={m._id} className="p-4 bg-white rounded-2xl border border-emerald-50 shadow-sm hover:border-emerald-200 transition-all hover:-translate-y-0.5 cursor-pointer group">
+                      <div className="font-bold text-sm text-slate-800 mb-2 line-clamp-1 group-hover:text-emerald-600 transition-colors">{m.title}</div>
+                      <div className="text-[11px] font-semibold text-slate-400 flex justify-between items-center">
+                        <span>{new Date(m.createdAt).toLocaleDateString()}</span>
+                        <span className={`px-2 py-0.5 rounded-full ${m.isRead ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>{m.isRead ? '✓ Seen' : '● New'}</span>
+                      </div>
                     </div>
                   ))}
                 {messages.filter(m => (m.sender?.toString() !== (user?._id || user?.id)?.toString()) && !['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(m.senderRole)).length === 0 && (
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', margin: '20px 0' }}>ምንም መልዕክት የለም (No messages)</p>
+                  <p className="text-center text-xs font-semibold text-slate-400 py-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">ምንም መልዕክት የለም</p>
                 )}
               </div>
             </div>
 
             {/* SENT: TO OFFICE */}
-            <div className="card" style={{ padding: '20px', borderRadius: '20px', border: '1px solid #f5f3ff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                 <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#8b5cf6', fontWeight: '900' }}>📤 ለጽህፈት ቤት (To Office)</h4>
-                 <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+            <div className="bg-gradient-to-b from-purple-50/50 to-white p-6 rounded-3xl border border-purple-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-center mb-5">
+                 <h4 className="m-0 text-sm text-purple-700 font-black flex items-center gap-2">
+                   <span className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-lg shadow-sm">📤</span>
+                   ለጽህፈት ቤት
+                 </h4>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-3">
                 {messages
                   .filter(m => (m.sender?.toString() === (user?._id || user?.id)?.toString()) && m.recipientType === 'leadership')
                   .slice(0, 3)
                   .map(m => (
-                    <div key={m._id} style={{ padding: '12px', background: '#fbfaff', borderRadius: '12px', border: '1px solid #f5f3ff' }}>
-                      <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#1e293b', marginBottom: '4px' }}>{m.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+                    <div key={m._id} className="p-4 bg-white rounded-2xl border border-purple-50 shadow-sm hover:border-purple-200 transition-all hover:-translate-y-0.5 cursor-pointer group">
+                      <div className="font-bold text-sm text-slate-800 mb-2 line-clamp-1 group-hover:text-purple-600 transition-colors">{m.title}</div>
+                      <div className="text-[11px] font-semibold text-slate-400 flex justify-between items-center">
                         <span>{new Date(m.createdAt).toLocaleDateString()}</span>
-                        <span style={{ fontWeight: '700', color: m.isRead ? '#4f46e5' : '#64748b' }}>{m.isRead ? '✓ ✓ Seen' : '✓ Delivered'}</span>
+                        <span className={`font-bold ${m.isRead ? 'text-purple-600' : 'text-slate-400'}`}>{m.isRead ? '✓✓ Seen' : '✓ Sent'}</span>
                       </div>
                     </div>
                   ))}
                 {messages.filter(m => (m.sender?.toString() === (user?._id || user?.id)?.toString()) && m.recipientType === 'leadership').length === 0 && (
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', margin: '20px 0' }}>ምንም መልዕክት የለም (No messages)</p>
+                  <p className="text-center text-xs font-semibold text-slate-400 py-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">ምንም መልዕክት የለም</p>
                 )}
               </div>
             </div>
 
             {/* SENT: TO DEPT */}
-            <div className="card" style={{ padding: '20px', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                 <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#0f172a', fontWeight: '900' }}>📤 ለክፍሉ (To Dept)</h4>
-                 <span style={{ fontSize: '1.2rem' }}>👔</span>
+            <div className="bg-gradient-to-b from-slate-50 to-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-center mb-5">
+                 <h4 className="m-0 text-sm text-slate-700 font-black flex items-center gap-2">
+                   <span className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-lg shadow-sm">📤</span>
+                   ለክፍሉ
+                 </h4>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-3">
                 {messages
                   .filter(m => (m.sender?.toString() === (user?._id || user?.id)?.toString()) && m.recipientType === 'department')
                   .slice(0, 3)
                   .map(m => (
-                    <div key={m._id} style={{ padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-                      <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#1e293b', marginBottom: '4px' }}>{m.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+                    <div key={m._id} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-slate-300 transition-all hover:-translate-y-0.5 cursor-pointer group">
+                      <div className="font-bold text-sm text-slate-800 mb-2 line-clamp-1 group-hover:text-slate-900 transition-colors">{m.title}</div>
+                      <div className="text-[11px] font-semibold text-slate-400 flex justify-between items-center">
                         <span>{new Date(m.createdAt).toLocaleDateString()}</span>
-                        <span style={{ fontWeight: '700', color: m.isRead ? '#4f46e5' : '#64748b' }}>{m.isRead ? '✓ ✓ Seen' : '✓ Delivered'}</span>
+                        <span className={`font-bold ${m.isRead ? 'text-slate-800' : 'text-slate-400'}`}>{m.isRead ? '✓✓ Seen' : '✓ Sent'}</span>
                       </div>
                     </div>
                   ))}
                 {messages.filter(m => (m.sender?.toString() === (user?._id || user?.id)?.toString()) && m.recipientType === 'department').length === 0 && (
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', margin: '20px 0' }}>ምንም መልዕክት የለም (No messages)</p>
+                  <p className="text-center text-xs font-semibold text-slate-400 py-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">ምንም መልዕክት የለም</p>
                 )}
               </div>
             </div>
@@ -668,31 +640,17 @@ const Dashboard = ({ user, setView }) => {
 
       {/* 5. Messaging Modal for Members */}
       {isMessagingModalOpen && (
-        <div style={{ 
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', 
-          background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(10px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
-          animation: 'fadeIn 0.3s ease'
-        }}>
-          <div className="card" style={{ 
-            width: '90%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto',
-            borderRadius: '35px', border: 'none', boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
-            position: 'relative', animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            background: '#fff'
-          }}>
-            <button 
-              onClick={() => setIsMessagingModalOpen(false)}
-              style={{ 
-                position: 'absolute', top: '25px', right: '35px', 
-                background: '#f1f5f9', border: 'none', borderRadius: '50%', 
-                width: '45px', height: '45px', cursor: 'pointer', zIndex: 10, 
-                fontWeight: '900', color: '#64748b', fontSize: '1.2rem',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}
-            >
-              ✕
-            </button>
-            <div style={{ padding: '10px' }}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-[2rem] shadow-2xl animate-scale-up">
+            <div className="sticky top-0 z-10 flex justify-end p-4 pointer-events-none">
+              <button 
+                onClick={() => setIsMessagingModalOpen(false)}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 rounded-full cursor-pointer transition-colors shadow-sm pointer-events-auto border-0"
+              >
+                <span className="font-black text-lg">✕</span>
+              </button>
+            </div>
+            <div className="px-4 md:px-8 pb-8 -mt-10">
               <MemberMessaging user={user} onClose={() => { setIsMessagingModalOpen(false); fetchMessages(); }} />
             </div>
           </div>

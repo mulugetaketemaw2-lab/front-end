@@ -54,6 +54,12 @@ const getApiUrl = () => {
 axios.defaults.baseURL = getApiUrl();
 console.log(`🌐 System API: ${axios.defaults.baseURL}`);
 
+// ─── Set auth token immediately at startup (prevents 401 race condition) ──
+const _savedToken = localStorage.getItem('token');
+if (_savedToken) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${_savedToken}`;
+}
+
 // ─── Password / Username generators ──────────────────────────
 const generatePassword = (length = 8) => {
   const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#!';
@@ -100,19 +106,26 @@ const NotificationBell = ({ token, onGoToApprovals }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [notifAvailable, setNotifAvailable] = useState(true);
   const ref = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
+    if (!notifAvailable) return;
     try {
       const { data } = await axios.get('/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(data.notifications || []);
       setUnreadCount(data.unread || 0);
-    } catch (_) {}
-  }, [token]);
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setNotifAvailable(false);
+      }
+    }
+  }, [token, notifAvailable]);
 
   useEffect(() => {
+    if (!notifAvailable) return;
     fetchNotifications();
     const id = setInterval(fetchNotifications, 30000);
     return () => clearInterval(id);
