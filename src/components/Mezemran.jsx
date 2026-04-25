@@ -527,7 +527,7 @@ const Mezemran = ({ token, setView }) => {
                   >
                     <td>
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>{mezemran.name}</div>
+                        <div style={{ fontWeight: '600', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{mezemran.name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{mezemran.gender || '—'}</div>
                       </div>
                     </td>
@@ -535,7 +535,7 @@ const Mezemran = ({ token, setView }) => {
                     <td>{mezemran.phone}</td>
                     <td>
                       <div>
-                        <div style={{ fontWeight: '500' }}>{mezemran.department || '—'}</div>
+                        <div style={{ fontWeight: '500', whiteSpace: 'nowrap' }}>{mezemran.department || '—'}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{mezemran.batch || ''}</div>
                       </div>
                     </td>

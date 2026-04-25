@@ -465,13 +465,13 @@ const BegenaMembers = ({ token }) => {
                     ) : (
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>👤</div>
                     )}
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>{m.firstName} {m.fatherName} {m.grandFatherName}</span>
+                    <span style={{ fontWeight: '600', color: '#1e293b', whiteSpace: 'nowrap' }}>{m.firstName} {m.fatherName} {m.grandFatherName}</span>
                   </div>
                 </td>
                 <td style={{ padding: '12px 15px', textAlign: 'left', fontSize: '0.9rem', color: '#64748b' }}>{m.studentId}</td>
                 <td style={{ padding: '12px 15px', textAlign: 'left', fontSize: '0.9rem', minWidth: '120px' }}>{m.phone}</td>
                 <td style={{ padding: '12px 15px', textAlign: 'left', fontSize: '0.9rem' }}>{m.gender}</td>
-                <td style={{ padding: '12px 15px', textAlign: 'left', fontSize: '0.85rem', color: '#475569' }}>
+                <td style={{ padding: '12px 15px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', whiteSpace: 'nowrap' }}>
                   {[m.region, m.zone, m.woreda].filter(Boolean).join(', ') || '-'}
                 </td>
                 <td style={{ padding: '12px 15px', textAlign: 'left' }}>

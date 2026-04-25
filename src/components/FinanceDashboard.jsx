@@ -791,12 +791,12 @@ const FinanceDashboard = ({ user, mode = 'standard' }) => {
                             {t.type === 'income' ? 'ገቢ' : 'ወጭ'}
                           </span>
                         </td>
-                        <td style={{ padding: '12px' }}>{t.description}</td>
-                        <td style={{ padding: '12px' }}>{t.category}</td>
+                        <td style={{ padding: '12px', whiteSpace: 'nowrap', fontWeight: '500' }}>{t.description}</td>
+                        <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{t.category}</td>
                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', color: t.type === 'income' ? primaryColor : '#b91c1c' }}>
                           {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} ETB
                         </td>
-                        {mode === 'approvals' && <td style={{ padding: '12px', fontWeight: 'bold', color: '#475569' }}>{t.department}</td>}
+                        {mode === 'approvals' && <td style={{ padding: '12px', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap' }}>{t.department}</td>}
                         <td style={{ padding: '12px', textAlign: 'center' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
                             {/* Office Status */}
@@ -942,12 +942,7 @@ const FinanceDashboard = ({ user, mode = 'standard' }) => {
 
       </div>
 
-      {/* Audit Note */}
-      <div style={{ marginTop: '30px', padding: '15px', background: '#f8fafc', borderRadius: '10px', borderLeft: '4px solid #334155' }}>
-        <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}>
-          <strong>ℹ️ Audit Note:</strong> ሁሉም የተመዘገቡ መረጃዎች በቀጥታ ለኦዲት (Audit) Executive Dashboard ሪፖርት ይደረጋሉ። (All entries are automatically reported to the Audit Executive Dashboard for transparency).
-        </p>
-      </div>
+
 
 
       {/* Print-specific Styles */}

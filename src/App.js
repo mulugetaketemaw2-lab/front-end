@@ -27,6 +27,7 @@ import CommunicationCenter from "./components/CommunicationCenter";
 import AnnouncementsPage from "./components/AnnouncementsPage";
 import MessagesPage from "./components/MessagesPage";
 import MemberSelfRegistration from "./components/MemberSelfRegistration";
+import YearTransitionManager from "./components/YearTransitionManager";
 // MerjaDashboard could be imported but the file name mismatch can be tricky.
 // We will stick to the basic ones first.
 
@@ -46,9 +47,10 @@ const getApiUrl = () => {
   if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
   
   const hostname = window.location.hostname;
-  return hostname !== 'localhost' 
-    ? `http://${hostname}:5001/api` 
-    : "http://localhost:5001/api";
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return "http://localhost:5001/api";
+  }
+  return "/api";
 };
 
 axios.defaults.baseURL = getApiUrl();
@@ -464,27 +466,9 @@ const Login = ({ onLogin, theme, toggleTheme }) => {
       
       {/* Floating Theme Toggle */}
       <button 
-        className="header-icon-btn theme-toggle-btn" 
+        className="header-icon-btn floating-theme-btn" 
         title="Toggle System Color" 
         onClick={toggleTheme}
-        style={{ 
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          zIndex: 1000,
-          background: 'rgba(255, 255, 255, 0.8)',
-          color: '#1e293b',
-          border: '1px solid rgba(0,0,0,0.1)',
-          width: '50px',
-          height: '50px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.4rem',
-          cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-        }}
       >
         {theme === 'default' ? '🎨' : '🌈'}
       </button>
@@ -541,11 +525,11 @@ const Login = ({ onLogin, theme, toggleTheme }) => {
               </select>
             </div>
           </div>
-          <div style={{ paddingLeft: 'calc(90px + 1.25rem)' }}>
+          <div className="login-btn-wrapper">
             <button type="submit" disabled={loading} className="login-btn">{loading ? 'Authenticating...' : 'Secure Login'}</button>
           </div>
 
-          <div style={{ paddingLeft: 'calc(90px + 1.25rem)', marginTop: '1rem' }}>
+          <div className="login-btn-wrapper" style={{ marginTop: '1rem' }}>
             <button type="button" onClick={() => setMode('reset')} className="forgot-pwd-btn">Forgot Password?</button>
           </div>
         </form>
@@ -901,7 +885,7 @@ const App = () => {
   // 'register' hack handled in Login component
   const [view, setView] = useState(() => {
     const path = window.location.pathname.substring(1);
-    if (['profile', 'dashboard', 'pending', 'register-exec', 'register-sub-exec', 'members', 'attendance', 'subgroups', 'settings', 'exec-mgmt', 'reports', 'finance', 'finance-approvals', 'finance-central', 'audit', 'begena', 'substitute-teachers', 'substitute-leaders', 'sub-teachers-history', 'sub-teachers-attendance', 'sub-leaders-history', 'sub-leaders-attendance'].includes(path)) {
+    if (['profile', 'dashboard', 'pending', 'register-exec', 'register-sub-exec', 'members', 'attendance', 'subgroups', 'settings', 'exec-mgmt', 'reports', 'finance', 'finance-approvals', 'finance-central', 'audit', 'begena', 'substitute-teachers', 'substitute-leaders', 'sub-teachers-history', 'sub-teachers-attendance', 'sub-leaders-history', 'sub-leaders-attendance', 'transition'].includes(path)) {
       return path;
     }
     return 'dashboard';
@@ -959,33 +943,34 @@ const App = () => {
   if (!isStaff) return null;
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '🏠', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit', 'sub_executive', 'member'] },
-    { id: 'exec-mgmt', label: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(user?.role) ? 'Executive' : 'Sub Executive', icon: '👔', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
-    { id: 'register-sub-exec', label: 'Sub Executive', icon: '👤', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'] },
-    { id: 'members', label: 'Members', icon: '👥', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
-    { id: 'all-members', label: 'ጠቅላላ የአባላት ዝርዝር', icon: '🌐', roles: ['super_admin', 'admin', 'sebsabi', 'abalat_guday', 'merja'] },
-    { id: 'finance', label: 'Finance', icon: '💰', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
-    { id: 'finance-approvals', label: 'Finance Approvals', icon: '⚖️', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'] },
-    { id: 'finance-central', label: 'Central Finance', icon: '🏛️', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'hisab'] },
-    { id: 'audit', label: 'Audit Dashboard', icon: '🔍', roles: ['audit', 'super_admin', 'admin'] },
-    { id: 'pending', label: 'Approvals', icon: '✅', roles: ['abalat_guday', 'super_admin', 'admin'] },
+    { id: 'dashboard', label: 'ዳሽቦርድ', icon: '🏠', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit', 'sub_executive', 'member'] },
+    { id: 'exec-mgmt', label: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(user?.role) ? 'ሥራ አስፈጻሚ' : 'ንዑስ ተጠሪ', icon: '👔', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
+    { id: 'register-sub-exec', label: 'ንዑስ ተጠሪ መዝግብ', icon: '👤', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'] },
+    { id: 'members', label: 'አባላት', icon: '👥', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
+    { id: 'all-members', label: 'ጠቅላላ አባላት', icon: '🌐', roles: ['super_admin', 'admin', 'sebsabi', 'abalat_guday', 'merja'] },
+    { id: 'finance', label: 'ፋይናንስ', icon: '💰', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
+    { id: 'finance-approvals', label: 'ፋይናንስ ማጽደቂያ', icon: '⚖️', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'] },
+    { id: 'finance-central', label: 'ማዕከላዊ ፋይናንስ', icon: '🏛️', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'hisab'] },
+    { id: 'audit', label: 'ኦዲት ማጠቃለያ', icon: '🔍', roles: ['audit', 'super_admin', 'admin'] },
+    { id: 'pending', label: 'ማጽደቂያዎች', icon: '✅', roles: ['abalat_guday', 'super_admin', 'admin', 'merja'] },
+    { id: 'transition', label: 'የዓመት ሽግግር', icon: '🔄', roles: ['abalat_guday', 'super_admin', 'admin'] },
     { id: 'substitute-teachers', label: 'ተተኪ መምህር', icon: '👨‍🏫', roles: ['timhirt', 'super_admin', 'admin'] },
     { id: 'deacons', label: 'ዲያቆናት', icon: '🕯️', roles: ['timhirt', 'super_admin', 'admin'] },
     { id: 'substitute-leaders', label: 'ተተኪ አመራር', icon: '👨‍💼', roles: ['abalat_guday', 'super_admin', 'admin'] },
     { id: 'mezemran', label: 'መዘምራን', icon: '🎤', roles: ['mezmur', 'super_admin', 'admin'] },
     { id: 'begena', label: 'የበገና አባላት', icon: '🎸', roles: ['mezmur', 'super_admin', 'admin'] },
-    { id: 'reports', label: 'Reports', icon: '📄', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'merja', 'hisab', 'audit'] },
-    { id: 'dept-report', label: 'Report', icon: '📄', roles: ['timhirt', 'abalat_guday', 'mezmur', 'lmat', 'muya', 'kwanqwa', 'bach'] },
-    { id: 'attendance', label: 'Attendance', icon: '📝', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
-    { id: 'communication', label: 'Communication ✨', icon: '📢', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit', 'sub_executive', 'member'] },
-    { id: 'settings', label: 'Settings', icon: '⚙️', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
+    { id: 'reports', label: 'ሪፖርቶች', icon: '📄', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'merja', 'hisab', 'audit'] },
+    { id: 'dept-report', label: 'ሪፖርት', icon: '📄', roles: ['timhirt', 'abalat_guday', 'mezmur', 'lmat', 'muya', 'kwanqwa', 'bach'] },
+    { id: 'attendance', label: 'የአባላት መከታተያ', icon: '📝', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
+    { id: 'communication', label: 'ግንኙነት', icon: '📢', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit', 'sub_executive', 'member'] },
+    { id: 'settings', label: 'ሲስተም ሴቲንግ', icon: '⚙️', roles: ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'] },
   ];
 
   return (
     <aside className={`sidebar-modern ${isOpen ? 'open' : ''}`}>
       <button className="mobile-sidebar-close" onClick={onClose}>&times;</button>
       <div className="sidebar-card">
-        <h4 className="sidebar-title"><span>🧭</span> ዋና ዝርዝር (Main Menu)</h4>
+        <h4 className="sidebar-title"><span>🧭</span> ዋና ዝርዝር</h4>
         <nav className="sidebar-nav">
           {navItems.filter(item => item.roles.includes(user?.role)).map(item => (
             <button 
@@ -1171,7 +1156,7 @@ const App = () => {
       <div className="app-main-layout">
         {showMobileSidebar && <div className="sidebar-overlay" onClick={() => setShowMobileSidebar(false)}></div>}
         <Sidebar view={view} setView={setView} user={user} isOpen={showMobileSidebar} onClose={() => setShowMobileSidebar(false)} />
-        <main className="content-body" style={{ paddingBottom: '60px', position: 'relative', minHeight: 'calc(100vh - 80px)' }}>
+        <main className="content-body" style={{ paddingBottom: '100px', position: 'relative', minHeight: 'calc(100vh - 80px)' }}>
           {view === 'dashboard' && <Dashboard user={user} setView={setView} />}
           {view === 'communication' && <CommunicationCenter user={user} token={token} initialTab="announcements" />}
           {view === 'comm-messages' && <CommunicationCenter user={user} token={token} initialTab="messages" />}
@@ -1195,6 +1180,7 @@ const App = () => {
           {view === 'finance-central' && <FinanceDashboard user={user} mode="central" />}
           { view === 'subgroups' && <Subgroups token={token} user={user} /> }
           { view === 'settings' && <SystemSettings user={user} /> }
+          { view === 'transition' && <YearTransitionManager theme={theme} /> }
           {view === 'register-exec' && <RegisterExecutive token={token} currentUser={user} />}
           {view === 'register-sub-exec' && <ExecutiveManagement token={token} currentUser={user} mode="sub_exec" />}
           {view === 'exec-mgmt' && <ExecutiveManagement token={token} currentUser={user} mode="core" />}
@@ -1229,13 +1215,13 @@ const App = () => {
             </div>
           )}
 
-          <footer className="app-footer" style={{ left: 0, right: 0, margin: 0 }}>
-            <div className="footer-content" style={{ width: '100%', maxWidth: 'none', padding: '0 25px' }}>
-              <span className="dev-text">Designed & Developed by <strong style={{color: '#ffd700'}}>Mulugeta Ketemaw</strong></span>
-              <span className="dev-separator">|</span>
-              <span className="dev-tag">📱 +251915942488</span>
-              <span className="dev-separator">|</span>
-              <span className="dev-tag">© 2018 E.C</span>
+          <footer className="app-footer">
+            <div className="dev-footer-content">
+              <span className="dev-text">Designed by <strong style={{color: '#ffd700'}}>Mulugeta K.</strong></span>
+              <span className="dev-separator">,</span>
+              <span className="dev-tag">+251915942488</span>
+              <span className="dev-separator">,</span>
+              <span className="dev-tag">2018 E.C</span>
             </div>
           </footer>
         </main>

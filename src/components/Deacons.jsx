@@ -635,14 +635,14 @@ const Deacons = ({ token }) => {
                   >
                     <td>
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>{deacon.name}</div>
+                        <div style={{ fontWeight: '600', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{deacon.name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{deacon.gender || '—'}</div>
                       </div>
                     </td>
                     <td><code style={{ fontSize: '0.85rem' }}>{deacon.studentId || '—'}</code></td>
                     <td>{deacon.phone}</td>
                     <td>
-                      <div style={{ fontWeight: '600', color: '#0f172a' }}>
+                      <div style={{ fontWeight: '500', color: '#0f172a', whiteSpace: 'nowrap' }}>
                         {deacon.studyField === 'ሌላ' ? deacon.studyFieldOther : deacon.studyField}
                       </div>
                     </td>

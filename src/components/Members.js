@@ -52,14 +52,14 @@ const Members = ({ token, user }) => {
     };
 
     useEffect(() => {
-        if (selectedTerm) {
+        if (selectedTerm !== undefined) {
             fetchMembers();
         }
-    }, [selectedTerm]);
+    }, [selectedTerm, filterDept]);
 
     // Set default department filter based on user role
     useEffect(() => {
-        if (user && !['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(user.role)) {
+        if (user && !['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'abalat_guday', 'hisab', 'audit', 'merja'].includes(user.role)) {
             const roleToDept = {
                 'abalat_guday': 'አባላት ጉዳይ',
                 'timhirt': 'ትምህርት ክፍል',
@@ -297,7 +297,7 @@ const Members = ({ token, user }) => {
                             style={{ width: '100%', padding: '10px', borderRadius: '10px' }}
                         />
                     </div>
-                    {['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'hisab', 'audit'].includes(user?.role) && (
+                    {['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'abalat_guday', 'hisab', 'audit', 'merja'].includes(user?.role) && (
                         <div style={{ flex: 1, minWidth: '180px' }}>
                             <select
                                 className="form-control"
@@ -394,7 +394,7 @@ const Members = ({ token, user }) => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'var(--primary)' }}>{m.firstName?.[0]}</div>
                                                 <div>
-                                                    <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{m.firstName} {m.fatherName}</div>
+                                                    <div style={{ fontWeight: '800', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{m.firstName} {m.fatherName}</div>
                                                     <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{m.batch} - {m.gender}</div>
                                                 </div>
                                             </div>
@@ -403,9 +403,15 @@ const Members = ({ token, user }) => {
                                         <td>{m.fellowshipId ? <span className="fellowship-id-badge">{m.fellowshipId}</span> : <span style={{ color: '#9ca3af', fontSize: '11px' }}>አልተሰጠም</span>}</td>
                                         <td><span className="dept-tag">{m.serviceDepartment}</span></td>
                                         <td>
-                                            <span className={`status-pill ${m.active ? 'active' : 'inactive'}`}>
-                                                {m.active ? 'ACTIVE' : 'INACTIVE'}
-                                            </span>
+                                            {!m.isApproved ? (
+                                                <span className="status-pill warning" style={{ background: '#fef3c7', color: '#92400e' }}>
+                                                    PENDING
+                                                </span>
+                                            ) : (
+                                                <span className={`status-pill ${m.active ? 'active' : 'inactive'}`}>
+                                                    {m.active ? 'ACTIVE' : 'INACTIVE'}
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -447,7 +453,7 @@ const Members = ({ token, user }) => {
                                         className="form-control" 
                                         required 
                                         style={{ borderRadius: '10px' }}
-                                        disabled={!['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'hisab', 'audit'].includes(user?.role)}
+                                        disabled={!['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy', 'abalat_guday', 'hisab', 'audit', 'merja'].includes(user?.role)}
                                     >
                                         {departments.map(d => <option key={d} value={d}>{d}</option>)}
                                     </select>
@@ -469,7 +475,7 @@ const Members = ({ token, user }) => {
 
             <style>{`
                 .fellowship-id-badge { background: #eff6ff; color: #2563eb; font-family: monospace; padding: 2px 8px; border-radius: 4px; font-weight: 700; border: 1px solid #bfdbfe; font-size: 0.8rem; }
-                .dept-tag { background: #f8fafc; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #e2e8f0; font-weight: 600; }
+                .dept-tag { background: #f8fafc; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #e2e8f0; font-weight: 500; white-space: nowrap; }
                 .status-pill { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
                 .status-pill.active { background: #dcfce7; color: #166534; }
                 .status-pill.inactive { background: #fee2e2; color: #991b1b; }

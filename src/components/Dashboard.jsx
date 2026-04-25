@@ -9,16 +9,16 @@ const AnnouncementsFeed = ({ announcements, loading, onDelete, onToggleStatus, c
   const isAdmin = ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(currentUserRole);
   
   return (
-    <div className="announcements-feed-section my-8">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-black text-slate-800 m-0 flex items-center gap-2">
+    <div className="announcements-feed-section my-4 md:my-8">
+      <div className="flex justify-between items-center mb-3 md:mb-6">
+        <h3 className="text-xl md:text-2xl font-black text-slate-800 m-0 flex items-center gap-2">
           {activeFilter === 'executive' ? '🎖️ የአመራር ዜናዎች (Executive News)' : 
            activeFilter === 'member' ? '👥 የአባላት ዜናዎች (Member News)' : 
            '📢 ዜናዎች እና ማስታወቂያዎች (News & Announcements)'}
         </h3>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {announcements
           .filter(post => activeFilter === 'all' ? true : post.targetGroup === activeFilter)
           .length === 0 ? (
@@ -47,7 +47,7 @@ const AnnouncementsFeed = ({ announcements, loading, onDelete, onToggleStatus, c
                   </button>
                 </div>
               )}
-              <div className="p-6">
+              <div className="p-4 md:p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex flex-wrap gap-2 items-center">
                     <span className={`text-[10px] font-black px-3 py-1 rounded-full tracking-wider uppercase ${post.targetGroup === 'member' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}`}>
@@ -125,6 +125,9 @@ const Dashboard = ({ user, setView }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [isMessagingModalOpen, setIsMessagingModalOpen] = useState(false);
   const [memberStats, setMemberStats] = useState(null);
+  const [currentTerm, setCurrentTerm] = useState('');
+  const [showTransitionModal, setShowTransitionModal] = useState(false);
+  const [transitionTargetBatch, setTransitionTargetBatch] = useState('');
   const messagesSectionRef = useRef(null);
 
   useEffect(() => {
@@ -132,7 +135,15 @@ const Dashboard = ({ user, setView }) => {
     fetchAnnouncements();
     checkMessagingSettings();
     fetchMessages();
+    fetchSystemSettings();
   }, []);
+
+  const fetchSystemSettings = async () => {
+    try {
+      const res = await axios.get('/settings/public');
+      setCurrentTerm(res.data.currentTerm);
+    } catch (err) {}
+  };
 
   const checkMessagingSettings = async () => {
     try {
@@ -233,6 +244,19 @@ const Dashboard = ({ user, setView }) => {
     }
   };
 
+  const handleSelfTransition = async () => {
+    if (!transitionTargetBatch) return toast.error('እባክዎ የሚቀጥለውን ባችዎን ይምረጡ');
+    try {
+      const res = await axios.post('/members/transition-self', { targetBatch: transitionTargetBatch });
+      toast.success(res.data.message);
+      setShowTransitionModal(false);
+      // Force refresh or logout to update token/state if needed
+      window.location.reload();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Transition failed');
+    }
+  };
+
   useEffect(() => {
     if (['super_admin', 'admin', 'audit', 'hisab', 'lmat'].includes(user?.role)) {
       fetchFinanceStats();
@@ -263,27 +287,88 @@ const Dashboard = ({ user, setView }) => {
         
         {/* Pending Registrations Notification Alert (Tailwind) */}
         {stats.pendingApprovals > 0 && ['abalat_guday', 'admin', 'super_admin'].includes(user?.role) && (
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl px-6 py-4 mb-6 shadow-sm animate-slide-down">
-            <div className="flex items-center gap-4">
-              <span className="w-12 h-12 flex items-center justify-center bg-amber-100 text-amber-600 rounded-xl text-2xl shadow-sm animate-bounce">🔔</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl px-4 md:px-6 py-3 md:py-4 mb-4 md:mb-6 shadow-sm animate-slide-down">
+            <div className="flex items-center gap-3 md:gap-4">
+              <span className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-amber-100 text-amber-600 rounded-xl text-xl md:text-2xl shadow-sm animate-bounce">🔔</span>
               <div>
-                <h4 className="text-amber-900 font-extrabold text-base m-0">አዲስ የተመዘገቡ ተማሪዎች አሉ! <span className="text-amber-600 font-medium text-sm">(New Registrations)</span></h4>
-                <p className="text-amber-700 text-sm font-medium m-0 mt-1">
+                <h4 className="text-amber-900 font-extrabold text-sm md:text-base m-0">አዲስ የተመዘገቡ ተማሪዎች አሉ! <span className="text-amber-600 font-medium text-xs md:text-sm">(New Registrations)</span></h4>
+                <p className="text-amber-700 text-[11px] md:text-sm font-medium m-0 mt-0.5 md:mt-1">
                   በአሁኑ ሰዓት <strong className="text-amber-900">{stats.pendingApprovals}</strong> የሚጸድቁ ተማሪዎች ይጠብቃሉ።
                 </p>
               </div>
             </div>
             <button
               onClick={() => navTo("/pending")}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border-0 cursor-pointer"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs md:text-sm px-4 md:px-6 py-2 md:py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border-0 cursor-pointer"
             >
               አሁን አጽድቅ →
             </button>
           </div>
         )}
+
+        {/* New Year Transition Alert for Members */}
+        {user?.role === 'member' && currentTerm && user.term !== currentTerm && (
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-4 md:px-6 py-3 md:py-4 mb-4 md:mb-6 shadow-sm animate-pulse-subtle">
+            <div className="flex items-center gap-3 md:gap-4">
+              <span className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-xl text-xl md:text-2xl shadow-sm">🚀</span>
+              <div>
+                <h4 className="text-blue-900 font-extrabold text-sm md:text-base m-0">የ{currentTerm} የሥራ ዘመን ተጀምሯል! <span className="text-blue-600 font-medium text-xs md:text-sm">(New Year Started)</span></h4>
+                <p className="text-blue-700 text-[11px] md:text-sm font-medium m-0 mt-0.5 md:mt-1">
+                  የበፊት መረጃዎን ወደ አዲሱ ዓመት በማሸጋገር አባልነትዎን ያድሱ።
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTransitionModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs md:text-sm px-4 md:px-6 py-2 md:py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border-0 cursor-pointer"
+            >
+              ወደ አዲሱ ዓመት ተሸጋገር →
+            </button>
+          </div>
+        )}
+
+        {/* Transition Modal */}
+        {showTransitionModal && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+                <h3 className="text-xl font-black m-0">የዓመት ሽግግር (Year Transition)</h3>
+                <p className="text-blue-100 text-sm mt-2 opacity-90">እባክዎ በአዲሱ ዓመት ({currentTerm}) የሚገኙበትን ባች ይምረጡ።</p>
+              </div>
+              <div className="p-6">
+                <label className="block text-slate-700 font-bold mb-2">የአዲሱ ዓመት ባች (New Batch)</label>
+                <select 
+                  className="w-full p-3 rounded-xl border-2 border-slate-100 focus:border-blue-500 outline-none transition-all"
+                  value={transitionTargetBatch}
+                  onChange={(e) => setTransitionTargetBatch(e.target.value)}
+                >
+                  <option value="">ባች ይምረጡ...</option>
+                  {['Remedial', 'Fresh', '1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'GC'].map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+                
+                <div className="mt-8 flex gap-3">
+                  <button 
+                    onClick={() => setShowTransitionModal(false)}
+                    className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+                  >
+                    ተመለስ
+                  </button>
+                  <button 
+                    onClick={handleSelfTransition}
+                    className="flex-2 px-6 py-3 rounded-xl font-black text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+                  >
+                    ሽግግሩን አረጋግጥ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Premium Welcome Banner (Tailwind) */}
-        <div className={`relative overflow-hidden rounded-3xl p-7 mb-2 shadow-lg ${isSubExec ? 'bg-gradient-to-br from-slate-800 to-slate-700' : 'bg-gradient-to-br from-indigo-700 via-indigo-600 to-purple-600'}`}>
+        <div className={`relative overflow-hidden rounded-3xl p-4 md:p-7 mb-1 md:mb-2 shadow-lg ${isSubExec ? 'bg-gradient-to-br from-slate-800 to-slate-700' : 'bg-gradient-to-br from-indigo-700 via-indigo-600 to-purple-600'}`}>
           {/* decorative blur blobs */}
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute -bottom-10 -left-10 w-52 h-52 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -295,10 +380,10 @@ const Dashboard = ({ user, setView }) => {
                 {isSubExec ? '🎖️' : '👋'}
               </div>
               <div>
-                <p className="text-white/70 text-sm font-semibold tracking-wide m-0 uppercase">
+                <p className="text-white/70 text-[10px] md:text-sm font-semibold tracking-wide m-0 uppercase">
                   {isSubExec ? `${departmentName} · ንኡስ ተጠሪ` : 'Administrative Dashboard'}
                 </p>
-                <p className="text-white font-bold text-base m-0 mt-1 max-w-md leading-snug">
+                <p className="text-white font-bold text-sm md:text-base m-0 mt-0.5 md:mt-1 max-w-md leading-snug">
                   {isSubExec
                     ? `የ${departmentName} ንኡስ ተጠሪ Dashboard`
                     : 'የተቋሙን አጠቃላይ መረጃዎች እና ስታቲስቲክስ እዚህ ማየት ይችላሉ።'}
@@ -340,58 +425,58 @@ const Dashboard = ({ user, setView }) => {
         </div>
 
       {/* Advanced Stats Grid for All Roles (Refactored with Tailwind) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 select-none mt-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 select-none mt-4 md:mt-8">
         {(!isMember && !isSubExec) ? (
           <>
             {/* Total Members */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-6 shadow-sm border border-blue-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-4 md:p-6 shadow-sm border border-blue-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute -right-4 -bottom-4 text-blue-200/50 text-8xl pointer-events-none">👥</div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-extrabold text-blue-900 uppercase tracking-widest">ጠቅላላ አባላት</h3>
                 <span className="w-10 h-10 flex items-center justify-center bg-blue-200 text-blue-700 rounded-xl shadow-sm text-lg">👥</span>
               </div>
-              <p className="text-5xl font-black text-blue-800 tracking-tight">{stats.totalMembers}</p>
+              <p className="text-3xl md:text-5xl font-black text-blue-800 tracking-tight">{stats.totalMembers}</p>
               <p className="text-xs text-blue-700 mt-3 font-semibold bg-blue-200/50 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">TOTAL MEMBERS</p>
             </div>
 
             {/* Pending */}
             {user?.role === 'abalat_guday' && (
-              <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-6 shadow-sm border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ring-2 ring-transparent hover:ring-amber-300" onClick={() => navTo("/pending")}>
+              <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-4 md:p-6 shadow-sm border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ring-2 ring-transparent hover:ring-amber-300" onClick={() => navTo("/pending")}>
                 <div className="absolute -right-4 -bottom-4 text-amber-200/50 text-8xl pointer-events-none animate-pulse">🔔</div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-extrabold text-amber-900 uppercase tracking-widest">የሚጸድቁ ጠባቂ</h3>
                   <span className="w-10 h-10 flex items-center justify-center bg-amber-200 text-amber-700 rounded-xl shadow-sm text-lg">🔔</span>
                 </div>
-                <p className="text-5xl font-black text-amber-800 tracking-tight">{stats.pendingApprovals || 0}</p>
+                <p className="text-3xl md:text-5xl font-black text-amber-800 tracking-tight">{stats.pendingApprovals || 0}</p>
                 <p className="text-xs text-amber-800 mt-3 font-semibold bg-amber-200/70 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">PENDING REGISTRATIONS</p>
               </div>
             )}
 
             {/* Active Members */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl p-6 shadow-sm border border-emerald-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl p-4 md:p-6 shadow-sm border border-emerald-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute -right-4 -bottom-4 text-emerald-200/50 text-8xl pointer-events-none">✅</div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-extrabold text-emerald-900 uppercase tracking-widest">ንቁ አባላት</h3>
                 <span className="w-10 h-10 flex items-center justify-center bg-emerald-200 text-emerald-700 rounded-xl shadow-sm text-lg">✅</span>
               </div>
-              <p className="text-5xl font-black text-emerald-800 tracking-tight">{stats.activeMembers}</p>
+              <p className="text-3xl md:text-5xl font-black text-emerald-800 tracking-tight">{stats.activeMembers}</p>
               <p className="text-xs text-emerald-700 mt-3 font-semibold bg-emerald-200/50 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">ACTIVE MEMBERS</p>
             </div>
 
             {/* Subgroups */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 shadow-sm border border-orange-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-4 md:p-6 shadow-sm border border-orange-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute -right-4 -bottom-4 text-orange-200/50 text-8xl pointer-events-none">📑</div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-extrabold text-orange-900 uppercase tracking-widest">ንኡስ ቡድኖች</h3>
                 <span className="w-10 h-10 flex items-center justify-center bg-orange-200 text-orange-700 rounded-xl shadow-sm text-lg">📑</span>
               </div>
-              <p className="text-5xl font-black text-orange-800 tracking-tight">{stats.totalSubgroups}</p>
+              <p className="text-3xl md:text-5xl font-black text-orange-800 tracking-tight">{stats.totalSubgroups}</p>
               <p className="text-xs text-orange-700 mt-3 font-semibold bg-orange-200/50 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">ACTIVE SUBGROUPS</p>
             </div>
           </>
         ) : (
           <>
-            <div className="relative overflow-hidden bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-3xl p-6 shadow-sm border border-cyan-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="relative overflow-hidden bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-3xl p-4 md:p-6 shadow-sm border border-cyan-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute -right-4 -bottom-4 text-cyan-200/50 text-8xl pointer-events-none">🏢</div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-extrabold text-cyan-900 uppercase tracking-widest">የተመዘገቡበት ክፍል</h3>
@@ -399,7 +484,7 @@ const Dashboard = ({ user, setView }) => {
               </div>
               <p className="text-2xl font-bold text-cyan-900 leading-tight pr-8">{memberStats?.department || departmentName}</p>
             </div>
-            <div className="relative overflow-hidden bg-gradient-to-br from-teal-50 to-teal-100 rounded-3xl p-6 shadow-sm border border-teal-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="relative overflow-hidden bg-gradient-to-br from-teal-50 to-teal-100 rounded-3xl p-4 md:p-6 shadow-sm border border-teal-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute -right-4 -bottom-4 text-teal-200/50 text-8xl pointer-events-none">🎯</div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-extrabold text-teal-900 uppercase tracking-widest">ተሳትፎ</h3>
@@ -408,75 +493,75 @@ const Dashboard = ({ user, setView }) => {
               <p className="text-3xl font-black text-teal-800">{memberStats?.engagement || 'ንቁ አሳታፊ'}</p>
               <p className="text-xs text-teal-700 mt-3 font-semibold bg-teal-200/50 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">{memberStats?.engagementDetail || 'Your status is currently active'}</p>
             </div>
-            <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl p-6 shadow-sm border border-purple-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl p-4 md:p-6 shadow-sm border border-purple-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute -right-4 -bottom-4 text-purple-200/50 text-8xl pointer-events-none">📣</div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-extrabold text-purple-900 uppercase tracking-widest">አዳዲስ ዜናዎች</h3>
                 <span className="w-10 h-10 flex items-center justify-center bg-purple-200 text-purple-700 rounded-xl shadow-sm text-lg">📣</span>
               </div>
-              <p className="text-5xl font-black text-purple-800 tracking-tight">{memberStats?.announcementCount ?? announcements.length}</p>
+              <p className="text-3xl md:text-5xl font-black text-purple-800 tracking-tight">{memberStats?.announcementCount ?? announcements.length}</p>
               <p className="text-xs text-purple-700 mt-3 font-semibold bg-purple-200/50 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">RECENT ANNOUNCEMENTS</p>
             </div>
           </>
         )}
         
         {/* Attendance */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-rose-50 to-rose-100 rounded-3xl p-6 shadow-sm border border-rose-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+        <div className="relative overflow-hidden bg-gradient-to-br from-rose-50 to-rose-100 rounded-3xl p-4 md:p-6 shadow-sm border border-rose-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="absolute -right-4 -bottom-4 text-rose-200/50 text-8xl pointer-events-none">📅</div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-extrabold text-rose-900 uppercase tracking-widest">ዛሬ የተገኙ</h3>
             <span className="w-10 h-10 flex items-center justify-center bg-rose-200 text-rose-700 rounded-xl shadow-sm text-lg">📅</span>
           </div>
-          <p className="text-5xl font-black text-rose-800 tracking-tight">{(isMember || isSubExec) ? (memberStats?.personalAttendance || 0) : stats.todayAttendance}</p>
+          <p className="text-3xl md:text-5xl font-black text-rose-800 tracking-tight">{(isMember || isSubExec) ? (memberStats?.personalAttendance || 0) : stats.todayAttendance}</p>
           <p className="text-xs text-rose-700 mt-3 font-semibold bg-rose-200/50 px-3 py-1.5 rounded-full inline-block backdrop-blur-md">{(isMember || isSubExec) ? `Attendance Rate: ${memberStats?.attendanceRate || '0%'}` : 'ATTENDANCE'}</p>
         </div>
       </div>
 
       {/* Finance Oversight for Audit/Admin (Refactored with Tailwind) */}
       {['super_admin', 'admin', 'audit', 'hisab'].includes(user?.role) && financeSummary && (
-        <div className="mt-8 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
+        <div className="mt-4 md:mt-8 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
           <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500 rounded-l-3xl"></div>
-          <div className="flex flex-wrap items-center justify-between px-8 py-5 border-b border-slate-100 bg-slate-50/50 backdrop-blur-sm">
-            <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
-              <span className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl text-lg shadow-sm">💰</span> 
-              የሂሳብ ክትትል <span className="text-slate-400 font-semibold text-lg hidden sm:inline">(Financial Oversight)</span>
+          <div className="flex flex-wrap items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-slate-100 bg-slate-50/50 backdrop-blur-sm">
+            <h3 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
+              <span className="p-2 md:p-2.5 bg-indigo-100 text-indigo-700 rounded-xl text-base md:text-lg shadow-sm">💰</span> 
+              የሂሳብ ክትትል <span className="text-slate-400 font-semibold text-sm md:text-lg hidden sm:inline">(Financial Oversight)</span>
             </h3>
             <span className="px-4 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-sm">
               Automatic Audit Sync <span className="text-[12px]">✅</span>
             </span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8 select-none bg-slate-50/30">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 p-4 md:p-8 select-none bg-slate-50/30">
             
             {/* Income */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all group flex flex-col justify-between">
+            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all group flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-black text-xl shadow-sm">↑</div>
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Monthly Income</span>
               </div>
-              <span className="text-3xl font-black text-emerald-600 pl-1 block group-hover:scale-105 transition-transform origin-left">
+              <span className="text-2xl md:text-3xl font-black text-emerald-600 pl-1 block group-hover:scale-105 transition-transform origin-left">
                 +{financeSummary.monthly.income.toLocaleString()} <span className="text-sm text-emerald-400 font-bold ml-1">ETB</span>
               </span>
             </div>
 
             {/* Expense */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-rose-300 hover:shadow-lg transition-all group flex flex-col justify-between">
+            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-rose-300 hover:shadow-lg transition-all group flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-black text-xl shadow-sm">↓</div>
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Monthly Expense</span>
               </div>
-              <span className="text-3xl font-black text-rose-600 pl-1 block group-hover:scale-105 transition-transform origin-left">
+              <span className="text-2xl md:text-3xl font-black text-rose-600 pl-1 block group-hover:scale-105 transition-transform origin-left">
                 -{financeSummary.monthly.expense.toLocaleString()} <span className="text-sm text-rose-400 font-bold ml-1">ETB</span>
               </span>
             </div>
 
             {/* Net Balance */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all group flex flex-col justify-between">
+            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all group flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-sm">⚖️</div>
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Net Balance (Annual)</span>
               </div>
-              <span className="text-3xl font-black text-indigo-700 pl-1 block group-hover:scale-105 transition-transform origin-left">
+              <span className="text-2xl md:text-3xl font-black text-indigo-700 pl-1 block group-hover:scale-105 transition-transform origin-left">
                 {(financeSummary.annual.income - financeSummary.annual.expense).toLocaleString()} <span className="text-sm text-indigo-400 font-bold ml-1">ETB</span>
               </span>
             </div>
@@ -509,10 +594,10 @@ const Dashboard = ({ user, setView }) => {
             <h3 className="m-0 font-black text-2xl text-slate-800 flex items-center gap-2">💬 የእኔ መልዕክቶች <span className="text-slate-400 text-lg font-semibold">(My Messages)</span></h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             
             {/* INBOX: FROM OFFICE */}
-            <div className="bg-gradient-to-b from-indigo-50/50 to-white p-6 rounded-3xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-gradient-to-b from-indigo-50/50 to-white p-4 md:p-6 rounded-3xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-5">
                  <h4 className="m-0 text-sm text-indigo-700 font-black flex items-center gap-2">
                    <span className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-lg shadow-sm">📥</span>

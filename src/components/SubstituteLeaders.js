@@ -949,7 +949,7 @@ const SubstituteLeaders = ({ token, setView }) => {
                   >
                     <td>
                       <div>
-                        <div style={{ fontWeight: '700' }}>{leader.name}</div>
+                        <div style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>{leader.name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{leader.gender || '—'}</div>
                       </div>
                     </td>

@@ -307,11 +307,27 @@ const SystemSettings = ({ user }) => {
   const [settings, setSettings] = useState({ currentTerm: "", allowMemberMessaging: false, allowExecutiveMessaging: false });
   const [deptSettings, setDeptSettings] = useState({ allowDepartmentMessaging: false });
   const [newTerm, setNewTerm] = useState("");
+  const [nextTransitionTerm, setNextTransitionTerm] = useState("");
   const [registrationNotice, setRegistrationNotice] = useState("");
   const [noticeEditDraft, setNoticeEditDraft] = useState("");
   const [isEditingNotice, setIsEditingNotice] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingNotice, setSavingNotice] = useState(false);
+  const [availableTerms, setAvailableTerms] = useState([]);
+  const [selectedRestoreTerm, setSelectedRestoreTerm] = useState("");
+  const [restoreOptions, setRestoreOptions] = useState({
+    restoreMembers: true,
+    restoreUsers: true,
+    restoreFinance: true,
+    restoreSubgroups: false,
+    setAsCurrent: false
+  });
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [restoreDept, setRestoreDept] = useState("");
+  const departments = [
+    'ትምህርት ክፍል', 'አባላት ጉዳይ', 'መዝሙር ክፍል', 'ባች ክፍል', 'ሙያ ክፍል', 'ልማት ክፍል', 'ቋንቋ ክፍል', 'መረጃ ክፍል', 'ሂሳብ እና ንብረት ክፍል', 'ኦዲት'
+  ];
 
   const isAdmin = ['super_admin', 'admin'].includes(user?.role);
   const isLeadership = ['sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(user?.role);
@@ -320,7 +336,10 @@ const SystemSettings = ({ user }) => {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      if (isAdmin || isLeadership) await fetchSettings();
+      if (isAdmin || isLeadership) {
+        await fetchSettings();
+        await fetchTerms();
+      }
       if (isDeptHead || isLeadership) await fetchUserSettings();
       setLoading(false);
     };
@@ -348,6 +367,17 @@ const SystemSettings = ({ user }) => {
     }
   };
 
+  const fetchTerms = async () => {
+    try {
+      const { data } = await axios.get("/settings/terms");
+      if (data.success) {
+        setAvailableTerms(data.terms);
+      }
+    } catch (error) {
+      console.error("Error fetching terms:", error);
+    }
+  };
+
   const handleTermChange = (e) => {
     setNewTerm(e.target.value);
   };
@@ -365,15 +395,68 @@ const SystemSettings = ({ user }) => {
   };
 
   const handleTransition = async () => {
-    if (!window.confirm("እርግጠኛ ነዎት? ይህ ለውጥ ሁሉንም አዳዲስ ምዝገባዎች ወደ አዲሱ አመት ይወስዳል። \n\nAre you sure? This will transition all activities to the new term.")) return;
-    
+    if (!nextTransitionTerm) return toast.error("እባክዎ የሚቀጥለውን አመተ ምህረት ያስገቡ (Please enter next term)");
+
+    const confirmMsg = `⚠️ ማስጠንቀቂያ፡ ይህን ሲያደርጉ የአሁኑ (የ${settings.currentTerm}) መረጃዎች በሙሉ ተቆልፈው ወደ ታሪክ (History) ይቀየራሉ፤ ሲስተሙም ወደ ${nextTransitionTerm} ይሸጋገራል።\n\nይቀጥሉ? (Are you sure you want to transition to ${nextTransitionTerm}?)`;
+    if (!window.confirm(confirmMsg)) return;
+
     try {
-      await axios.post("/settings/transition", { newTerm });
-      toast.success("የአመት ሽግግር በተሳካ ሁኔታ ተጠናቋል (Yearly transition completed)");
+      const res = await axios.post("/settings/transition", { nextTerm: nextTransitionTerm });
+      toast.success(res.data.message);
       fetchSettings();
+      fetchTerms();
+      setNextTransitionTerm("");
     } catch (error) {
       console.error("Transition error:", error);
-      toast.error("ሽግግሩ አልተሳካም (Transition failed)");
+      toast.error(error.response?.data?.message || "ሽግግር አልተሳካም (Transition failed)");
+    }
+  };
+
+  const handleRestoreTerm = async () => {
+    if (!selectedRestoreTerm) return toast.error("እባክዎ የሚመለሰውን አመት ይምረጡ (Please select a term)");
+    
+    const confirmMsg = `እርግጠኛ ነዎት? የ${selectedRestoreTerm} አመት መረጃዎችን ወደ activeነት ለመመለስ ፈልገዋል?\n\nAre you sure you want to restore data for ${selectedRestoreTerm}?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsRestoring(true);
+    try {
+      const res = await axios.post("/settings/restore-term", {
+        termToRestore: selectedRestoreTerm,
+        targetDepartment: restoreDept,
+        ...restoreOptions
+      });
+      toast.success(res.data.message);
+      if (restoreOptions.setAsCurrent) fetchSettings();
+    } catch (error) {
+      console.error("Restore term error:", error);
+      toast.error(error.response?.data?.message || "መመለስ አልተሳካም (Restore failed)");
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const handleArchiveTerm = async () => {
+    if (!selectedRestoreTerm) return toast.error("እባክዎ የሚቆለፈውን አመት ይምረጡ (Please select a term)");
+    
+    const confirmMsg = `⚠️ ማስጠንቀቂያ፡ የ${selectedRestoreTerm} አመት መረጃዎችን (አባላት፣ ሂሳብ...) መልሰው inactive ለማድረግ እርግጠኛ ነዎት?\n\nAre you sure you want to deactivate data for ${selectedRestoreTerm}?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsArchiving(true);
+    try {
+      const res = await axios.post("/settings/archive-term", {
+        termToArchive: selectedRestoreTerm,
+        targetDepartment: restoreDept,
+        archiveMembers: restoreOptions.restoreMembers,
+        archiveUsers: restoreOptions.restoreUsers,
+        archiveFinance: restoreOptions.restoreFinance,
+        archiveSubgroups: restoreOptions.restoreSubgroups
+      });
+      toast.success(res.data.message);
+    } catch (error) {
+      console.error("Archive term error:", error);
+      toast.error(error.response?.data?.message || "ማገድ አልተሳካም (Deactivation failed)");
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -497,34 +580,6 @@ const SystemSettings = ({ user }) => {
         </div>
       </div>
       
-      {isAdmin && (
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">ወቅታዊ አመት ማስተዳደሪያ (Term Management)</h3>
-          </div>
-          <div style={{ marginBottom: '15px' }}>
-            <p style={{ margin: 0, color: 'var(--text-muted)' }}>የአሁኑ አመት (Current Term): <strong style={{ color: 'var(--primary)', fontSize: '1.1rem', marginLeft: '5px' }}>{settings.currentTerm || 'Not set'}</strong></p>
-          </div>
-          
-          <form onSubmit={handleUpdateTerm} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1, maxWidth: '300px' }}>
-              <input 
-                type="text" 
-                className="form-control"
-                value={newTerm} 
-                onChange={handleTermChange}
-                placeholder={`ምሳሌ: ${greToEth(new Date()).year} E.C`}
-                required
-              />
-              <small style={{ color: 'var(--text-light)', marginTop: '4px', display: 'block' }}>Enter the new academic year formatting</small>
-            </div>
-            <button type="submit" className="btn btn-primary">
-              <span style={{ marginRight: '6px' }}>💾</span> አዘምን (Update)
-            </button>
-          </form>
-        </div>
-      )}
-
       {(isAdmin || isLeadership) && (
         <div className="card" style={{ borderLeft: '5px solid #4f46e5', padding: '25px', borderRadius: '24px' }}>
           <div className="card-header" style={{ borderBottom: 'none', padding: '0 0 20px' }}>
@@ -704,20 +759,155 @@ const SystemSettings = ({ user }) => {
         </div>
       )}
 
+      {/* Sensitive Operations Section (At the Bottom) */}
       {isAdmin && (
-        <>
-          <div className="card" style={{ borderLeft: '4px solid var(--danger)' }}>
-            <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-              <h3 className="card-title" style={{ color: 'var(--danger)' }}>⚠️ የአመት ሽግግር (Yearly Transition)</h3>
+        <div style={{ marginTop: '50px', paddingTop: '30px', borderTop: '2px dashed #e2e8f0' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: '#64748b', marginBottom: '20px', textAlign: 'center', opacity: 0.8 }}>⚠️ የላቁ የሲስተም ስራዎች (Advanced System Operations)</h2>
+          
+          {/* 1. Term Update */}
+          <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
+            <div className="card-header">
+              <h3 className="card-title">ወቅታዊ አመት ማስተዳደሪያ (Term Management)</h3>
             </div>
             <div style={{ padding: '0 1.5rem 1.5rem' }}>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '15px' }}>ይህ ተግባር አዲሱን አመት ይጀምራል። (Executing this action will transition the system to the new term. Do this carefully!)</p>
-              <button onClick={handleTransition} className="btn btn-danger btn-lg">
-                <span style={{ marginRight: '8px' }}>🚀</span> አዲስ አመት ጀምር (Execute Transition)
-              </button>
+              <p style={{ margin: '0 0 15px', color: 'var(--text-muted)' }}>የአሁኑ አመት (Current Term): <strong style={{ color: 'var(--primary)', fontSize: '1.1rem', marginLeft: '5px' }}>{settings.currentTerm || 'Not set'}</strong></p>
+              <form onSubmit={handleUpdateTerm} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, maxWidth: '300px' }}>
+                  <input 
+                    type="text" 
+                    className="form-control"
+                    value={newTerm} 
+                    onChange={handleTermChange}
+                    placeholder={`ምሳሌ: ${greToEth(new Date()).year} E.C`}
+                    required
+                  />
+                  <small style={{ color: 'var(--text-light)', marginTop: '4px', display: 'block' }}>Enter the new academic year formatting</small>
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  <span style={{ marginRight: '6px' }}>💾</span> አዘምን (Update)
+                </button>
+              </form>
             </div>
           </div>
 
+          {/* 2. Restore Term */}
+          <div className="card" style={{ borderLeft: '4px solid #10b981' }}>
+            <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <h3 className="card-title" style={{ color: '#059669' }}>🔄 ያለፈን አመት መረጃ መመለስ (Restore Past Term)</h3>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+                ያለፈን አመት መረጃዎችን (አባላት፣ ሂሳብ...) መልሰው active ማድረግ ይችላሉ። (Restore archived terms to active status.)
+              </p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '700', marginBottom: '8px', color: '#475569' }}>የሚመለስ አመት (Term to Restore)</label>
+                  <select 
+                    className="form-control" 
+                    value={selectedRestoreTerm} 
+                    onChange={e => setSelectedRestoreTerm(e.target.value)}
+                    style={{ borderRadius: '12px' }}
+                  >
+                    <option value="">አመት ይምረጡ (Select Term)</option>
+                    {availableTerms.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontWeight: '700', marginBottom: '8px', color: '#475569' }}>የሚመለስ ክፍል (Filter by Dept - Optional)</label>
+                  <select 
+                    className="form-control" 
+                    value={restoreDept} 
+                    onChange={e => setRestoreDept(e.target.value)}
+                    style={{ borderRadius: '12px' }}
+                  >
+                    <option value="">ሁሉም ክፍሎች (All Departments)</option>
+                    {departments.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <label style={{ fontWeight: '700', color: '#475569' }}>ምን ምን ይመለስ? (Restore Options)</label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={restoreOptions.restoreMembers} onChange={e => setRestoreOptions({...restoreOptions, restoreMembers: e.target.checked})} />
+                    <span style={{ fontSize: '0.9rem' }}>አባላት (Members)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={restoreOptions.restoreUsers} onChange={e => setRestoreOptions({...restoreOptions, restoreUsers: e.target.checked})} />
+                    <span style={{ fontSize: '0.9rem' }}>የተጠቃሚ አካውንቶች (User Accounts)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={restoreOptions.restoreFinance} onChange={e => setRestoreOptions({...restoreOptions, restoreFinance: e.target.checked})} />
+                    <span style={{ fontSize: '0.9rem' }}>የሂሳብ መረጃዎች (Finance Records)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={restoreOptions.setAsCurrent} onChange={e => setRestoreOptions({...restoreOptions, setAsCurrent: e.target.checked})} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#059669' }}>ወቅታዊ አመት ይሁን (Set as Current Term)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <button 
+                  onClick={handleRestoreTerm} 
+                  disabled={isRestoring || isArchiving || !selectedRestoreTerm}
+                  className="btn btn-primary"
+                  style={{ background: '#10b981', borderColor: '#10b981', padding: '12px 25px', borderRadius: '12px', fontWeight: '800', flex: 1 }}
+                >
+                  {isRestoring ? '⏳ በመመለስ ላይ...' : '🔄 መረጃውን መልስ (Activate)'}
+                </button>
+                <button 
+                  onClick={handleArchiveTerm} 
+                  disabled={isRestoring || isArchiving || !selectedRestoreTerm}
+                  className="btn btn-danger"
+                  style={{ padding: '12px 25px', borderRadius: '12px', fontWeight: '800', flex: 1 }}
+                >
+                  {isArchiving ? '⏳ በመቆለፍ ላይ...' : '🚫 መልሰህ እገድ (Deactivate)'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Transition */}
+          <div className="card" style={{ borderLeft: '6px solid var(--danger)', padding: '25px', borderRadius: '24px' }}>
+            <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <h3 className="card-title" style={{ color: 'var(--danger)', fontSize: '1.4rem', fontWeight: '900' }}>🚀 ወደ አዲስ አመት ሽግግር (Yearly Transition)</h3>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <p style={{ color: '#64748b', marginBottom: '20px', lineHeight: '1.6' }}>
+                ይህ ተግባር የአሁኑን አመት (**{settings.currentTerm}**) መረጃዎች በሙሉ inactive አድርጎ ወደ ታሪክ (History) በመቀየር ሲስተሙን ለአዲስ አመት ስራ ያዘጋጃል። <br/>
+                <span style={{ color: '#ef4444', fontWeight: '700' }}>⚠️ ማሳሰቢያ፡ አንዴ ካደረጉት በኋላ መመለስ የሚቻለው በRestore ብቻ ነው።</span>
+              </p>
+
+              <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', background: '#fef2f2', padding: '20px', borderRadius: '16px', border: '1px solid #fee2e2' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontWeight: '800', marginBottom: '8px', color: '#991b1b' }}>የሚቀጥለው አመተ ምህረት (Enter Next Term)</label>
+                  <input 
+                    type="text" 
+                    className="form-control"
+                    value={nextTransitionTerm} 
+                    onChange={(e) => setNextTransitionTerm(e.target.value)}
+                    placeholder={`ምሳሌ: ${greToEth(new Date()).year + 1} E.C`}
+                    style={{ borderRadius: '12px', border: '1.5px solid #fca5a5', padding: '12px' }}
+                  />
+                </div>
+                <button 
+                  onClick={handleTransition} 
+                  className="btn btn-danger"
+                  style={{ height: '50px', padding: '0 30px', borderRadius: '12px', fontWeight: '900', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)' }}
+                >
+                  🚀 ሽግግሩን ጀምር (Transit Now)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Data Backup/Restore */}
           <div className="card">
             <div className="card-header">
               <h3 className="card-title">የመረጃ ጥበቃ (Data Management)</h3>
@@ -749,8 +939,9 @@ const SystemSettings = ({ user }) => {
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
+
     </div>
   );
 };

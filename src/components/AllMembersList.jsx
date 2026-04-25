@@ -13,7 +13,7 @@ const AllMembersList = ({ token, user }) => {
     const [viewingMember, setViewingMember] = useState(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [terms, setTerms] = useState([]);
-    const [selectedTerm, setSelectedTerm] = useState("");
+    const [selectedTerm, setSelectedTerm] = useState(""); // Empty = all terms
 
     const [viewMode, setViewMode] = useState('list'); // 'list', 'detail', or 'edit'
     const [editFormData, setEditFormData] = useState({});
@@ -74,7 +74,8 @@ const AllMembersList = ({ token, user }) => {
                 axios.get('/settings/terms')
             ]);
             if (settingsRes.data?.currentTerm) {
-                setSelectedTerm(settingsRes.data.currentTerm);
+                // Don't auto-set term for Master List to avoid filtering out old/new members by default
+                // setSelectedTerm(settingsRes.data.currentTerm);
             }
             if (termsRes.data.success) {
                 setTerms(termsRes.data.terms);
@@ -84,10 +85,11 @@ const AllMembersList = ({ token, user }) => {
         }
     };
 
-    const fetchMembers = async () => {
+    const fetchMembers = async (termOverride) => {
         setLoading(true);
+        const term = termOverride !== undefined ? termOverride : selectedTerm;
         try {
-            const termQuery = selectedTerm ? `?term=${encodeURIComponent(selectedTerm)}&fullList=true` : '?fullList=true';
+            const termQuery = term ? `?term=${encodeURIComponent(term)}&fullList=true` : '?fullList=true';
             const { data } = await axios.get(`/members${termQuery}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -99,9 +101,15 @@ const AllMembersList = ({ token, user }) => {
         }
     };
 
+    // On first mount: load initial data
     useEffect(() => {
-        if (selectedTerm) {
-            fetchMembers();
+        fetchInitialData();
+    }, []);
+
+    // When term changes (user selects a term), re-fetch with that filter
+    useEffect(() => {
+        if (selectedTerm !== undefined) {
+            fetchMembers(selectedTerm);
         }
     }, [selectedTerm]);
 
@@ -543,6 +551,7 @@ const AllMembersList = ({ token, user }) => {
                             onChange={(e) => setSelectedTerm(e.target.value)}
                             style={{ borderRadius: '10px', fontWeight: '600', color: 'var(--primary)' }}
                         >
+                            <option value="">ሁሉም አምተ ምህረት (All Terms)</option>
                             {terms.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
@@ -626,7 +635,7 @@ const AllMembersList = ({ token, user }) => {
                                                     {m.firstName?.[0]}
                                                 </div>
                                                 <div>
-                                                    <div style={{ fontWeight: '800', fontSize: '0.92rem', color: '#1e293b' }}>{m.firstName} {m.fatherName} {m.grandFatherName}</div>
+                                                    <div style={{ fontWeight: '800', fontSize: '0.92rem', color: '#1e293b', whiteSpace: 'nowrap' }}>{m.firstName} {m.fatherName} {m.grandFatherName}</div>
                                                     <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>{m.gender} • {m.batch}</div>
                                                 </div>
                                             </div>
@@ -635,25 +644,42 @@ const AllMembersList = ({ token, user }) => {
                                         <td><span style={{ fontWeight: '600', color: '#475569', fontSize: '0.9rem' }}>{m.phone}</span></td>
                                         <td>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                <span className="dept-tag" style={{ border: 'none', background: 'rgba(99, 102, 241, 0.1)', color: '#4f46e5', fontWeight: '800', padding: '2px 10px', fontSize: '0.72rem' }}>{m.serviceDepartment}</span>
-                                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', paddingLeft: '4px' }}>{m.department}</span>
+                                                <span className="dept-tag" style={{ border: 'none', background: 'rgba(99, 102, 241, 0.1)', color: '#4f46e5', fontWeight: '600', padding: '2px 10px', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{m.serviceDepartment}</span>
+                                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', paddingLeft: '4px', whiteSpace: 'nowrap' }}>{m.department}</span>
                                             </div>
                                         </td>
                                         {!isMerja && (
                                             <td>
-                                                <span className={`status-pill ${m.active ? 'active' : 'inactive'}`} style={{ letterSpacing: '0.5px', fontSize: '0.68rem', padding: '4px 12px' }}>
-                                                    {m.active ? 'ACTIVE' : 'BLOCKED'}
-                                                </span>
+                                                {!m.isApproved ? (
+                                                    <span className="status-pill warning" style={{ letterSpacing: '0.5px', fontSize: '0.68rem', padding: '4px 12px', background: '#fef3c7', color: '#92400e', borderRadius: '20px', fontWeight: '700' }}>
+                                                        PENDING
+                                                    </span>
+                                                ) : (
+                                                    <span className={`status-pill ${m.active ? 'active' : 'inactive'}`} style={{ letterSpacing: '0.5px', fontSize: '0.68rem', padding: '4px 12px' }}>
+                                                        {m.active ? 'ACTIVE' : 'BLOCKED'}
+                                                    </span>
+                                                )}
                                             </td>
                                         )}
                                         {isMerja && (
                                             <td>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); fetchMemberDetail(m._id); }}
-                                                    style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-                                                >
-                                                    🔍 ዝርዝር
-                                                </button>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    {!m.isApproved ? (
+                                                        <span className="status-pill warning" style={{ letterSpacing: '0.5px', fontSize: '0.62rem', padding: '3px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '15px', fontWeight: '700' }}>
+                                                            PENDING
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`status-pill ${m.active ? 'active' : 'inactive'}`} style={{ letterSpacing: '0.5px', fontSize: '0.62rem', padding: '3px 8px', borderRadius: '15px' }}>
+                                                            {m.active ? 'ACTIVE' : 'BLOCKED'}
+                                                        </span>
+                                                    )}
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); fetchMemberDetail(m._id); }}
+                                                        style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                                    >
+                                                        🔍 ዝርዝር
+                                                    </button>
+                                                </div>
                                             </td>
                                         )}
                                     </tr>

@@ -21,8 +21,13 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
     // Public settings
     axios.get('/settings/public').then(res => {
       if (res.data?.currentTerm) setFormData(prev => ({ ...prev, term: res.data.currentTerm }));
-      if (res.data?.registrationNotice) setRegistrationNotice(res.data.registrationNotice);
-    }).catch(() => { });
+      if (res.data?.registrationNotice) {
+        setRegistrationNotice(res.data.registrationNotice);
+        setShowNoticeModal(true);
+      }
+    }).catch(err => {
+      console.error("Error fetching public settings:", err);
+    });
   }, []);
 
   const handleNameChange = (field, value) => {
@@ -76,8 +81,8 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
     try {
       const payload = { ...formData };
       if (payload.spiritualFatherSelect) {
-        payload.spiritualFather = payload.spiritualFatherSelect === 'የለኝም' && payload.customSpiritualFather 
-          ? payload.customSpiritualFather 
+        payload.spiritualFather = payload.spiritualFatherSelect === 'የለኝም' && payload.customSpiritualFather
+          ? payload.customSpiritualFather
           : payload.spiritualFatherSelect;
       }
       const res = await axios.post('/members/self-register', payload);
@@ -89,7 +94,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
   };
 
   return (
-    <div className="registration-container" style={{ 
+    <div className="registration-container" style={{
       background: 'var(--bg)',
       minHeight: '100vh',
       padding: '40px 20px',
@@ -100,11 +105,11 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
       transition: 'background 0.3s'
     }}>
       {/* Floating Theme Toggle */}
-      <button 
-        className="header-icon-btn theme-toggle-btn" 
-        title="Toggle System Color" 
+      <button
+        className="header-icon-btn theme-toggle-btn"
+        title="Toggle System Color"
         onClick={toggleTheme}
-        style={{ 
+        style={{
           position: 'fixed',
           top: '20px',
           right: '20px',
@@ -125,8 +130,8 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
       >
         {theme === 'default' ? '🎨' : '🌈'}
       </button>
-      <div className="registration-box" style={{ 
-        maxWidth: '850px', 
+      <div className="registration-box" style={{
+        maxWidth: '850px',
         width: '100%',
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
@@ -136,7 +141,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
         border: '1px solid rgba(255,255,255,0.8)'
       }}>
         {/* Religious Invocation - Full Width Banner */}
-        <div style={{ 
+        <div style={{
           margin: '-40px -40px 30px -40px',
           padding: '22px 40px',
           background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 30%, #1a4a6e 60%, #0f2d44 100%)',
@@ -163,11 +168,11 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             background: 'linear-gradient(90deg, transparent, #d4af37, #f0d060, #d4af37, transparent)',
             borderRadius: '2px'
           }} />
-          <h4 style={{ 
-            fontFamily: 'inherit', 
-            fontSize: '1.25rem', 
-            fontWeight: '800', 
-            margin: 0, 
+          <h4 style={{
+            fontFamily: 'inherit',
+            fontSize: '1.25rem',
+            fontWeight: '800',
+            margin: 0,
             color: '#d4af37',
             letterSpacing: '0.06em',
             textShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -196,8 +201,8 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
                 boxShadow: '0 8px 16px rgba(0,0,0,0.1)', overflow: 'hidden', background: '#f1f5f9',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
-                {formData.photo ? 
-                  <img src={formData.photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : 
+                {formData.photo ?
+                  <img src={formData.photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
                   <span style={{ fontSize: '3rem' }}>👤</span>
                 }
               </div>
@@ -211,9 +216,9 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
                 <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
               </label>
               {formData.photo && (
-                <button 
+                <button
                   type="button"
-                  onClick={() => setFormData({...formData, photo: ''})}
+                  onClick={() => setFormData({ ...formData, photo: '' })}
                   style={{
                     position: 'absolute', top: '0', right: '0', background: '#ef4444',
                     color: '#fff', width: '30px', height: '30px', borderRadius: '50%',
@@ -228,17 +233,16 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             </p>
 
             {registrationNotice && (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowNoticeModal(true)}
                 className="btn btn-warning"
-                style={{ 
+                style={{
                   marginTop: '15px',
-                  borderRadius: '12px', 
-                  padding: '12px 24px', 
+                  borderRadius: '12px',
+                  padding: '12px 24px',
                   fontWeight: '800',
-                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)',
-                  animation: 'pulse 2s infinite'
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
                 }}
               >
                 📜 አስፈላጊ መረጃ (Important Info)
@@ -253,27 +257,27 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ስም (First Name) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ስም *</label>
                 <input type="text" className="form-control" value={formData.firstName} onChange={e => handleNameChange('firstName', e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
               <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የአባት ስም (Father's Name) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የአባት ስም *</label>
                 <input type="text" className="form-control" value={formData.fatherName} onChange={e => handleNameChange('fatherName', e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
               <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የአያት ስም (Grandfather's Name) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የአያት ስም *</label>
                 <input type="text" className="form-control" value={formData.grandFatherName} onChange={e => handleAmharicInput('grandFatherName', e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የክርስትና ስም (Christian Name)</label>
-                <input type="text" className="form-control" value={formData.christianName} onChange={e => handleAmharicInput('christianName', e.target.value)} placeholder="አማራጭ (Optional)" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የክርስትና ስም</label>
+                <input type="text" className="form-control" value={formData.christianName} onChange={e => handleAmharicInput('christianName', e.target.value)} placeholder="አማራጭ" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የንስሐ አባት (Spiritual Father)</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የንስሐ አባት</label>
                 <select className="form-control" value={formData.spiritualFatherSelect} onChange={e => setFormData({ ...formData, spiritualFatherSelect: e.target.value })} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
-                  <option value="">ይምረጡ (Select)</option>
+                  <option value="">ይምረጡ</option>
                   <option value="አባ ገብረ ሚካኤል">አባ ገብረ ሚካኤል</option>
                   <option value="ቀሲስ ደጀኔ">ቀሲስ ደጀኔ</option>
                   <option value="ቀሲስ ብርሃኑ">ቀሲስ ብርሃኑ</option>
@@ -301,7 +305,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             </div>
             <div style={{ marginTop: '20px' }}>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ሰንበት ት/ቤት አገልግለዋል? (Sunday School Service) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ሰንበት ት/ቤት አገልግለዋል? *</label>
                 <select className="form-control" value={formData.isSundaySchoolServed} onChange={e => setFormData({ ...formData, isSundaySchoolServed: e.target.value })} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
                   <option value="አላገለገልኩም">አላገለገልኩም</option>
                   <option value="አገልግያለሁ">አገልግያለሁ</option>
@@ -313,7 +317,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
           {/* Section: University Info */}
           <div className="premium-form-section" style={{ marginBottom: '35px', padding: '25px', background: '#f8fafc', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
             <h4 style={{ margin: '0 0 20px', color: '#334155', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-              <span>🎓</span> የዩኒቨርሲቲ መረጃ (University Info)
+              <span>🎓</span> የዩኒቨርሲቲ መረጃ
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr', gap: '20px' }}>
               <div className="form-group">
@@ -321,7 +325,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
                 <input type="text" className="form-control" value={formData.studentId} onChange={e => { if (/^[a-zA-Z0-9/\-_.]*$/.test(e.target.value)) setFormData({ ...formData, studentId: e.target.value }) }} placeholder="WU/..." required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ትምህርት ክፍል (Department) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ትምህርት ክፍል *</label>
                 <select className="form-control" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
                   <option value="">Select Department</option>
                   <option value="Software engineering">Software engineering</option>
@@ -350,7 +354,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
                 </select>
               </div>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ባች (Batch) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ባች *</label>
                 <select className="form-control" value={formData.batch} onChange={e => setFormData({ ...formData, batch: e.target.value })} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
                   <option value="">Select Batch</option>
                   {['Remedial', 'Fresh', '1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'GC'].map(b => <option key={b} value={b}>{b}</option>)}
@@ -359,35 +363,35 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginTop: '20px' }}>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ጾታ (Gender) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ጾታ *</label>
                 <select className="form-control" value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
                   <option value="">Select</option>
-                  <option value="Male">ወንድ (Male)</option>
-                  <option value="Female">ሴት (Female)</option>
+                  <option value="Male">ወንድ</option>
+                  <option value="Female">ሴት</option>
                 </select>
               </div>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ክህነት (Ordination)</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ክህነት</label>
                 <select className="form-control" value={formData.ordination} onChange={e => setFormData({ ...formData, ordination: e.target.value })} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
-                  <option value="የለም">የለኝም (None)</option>
-                  <option value="ቅስና">ቅስና (Priest)</option>
-                  <option value="ድቁና">ድቁና (Deacon)</option>
+                  <option value="የለም">የለኝም</option>
+                  <option value="ቅስና">ቅስና</option>
+                  <option value="ድቁና">ድቁና</option>
                 </select>
               </div>
               <div className="form-group">
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ማገልገል የሚፈልጉት? *</label>
                 <select className="form-control" value={formData.serviceDepartment} onChange={e => setFormData({ ...formData, serviceDepartment: e.target.value })} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
-                  <option value="">ይምረጡ (Select)</option>
-                  <option value="ትምህርት ክፍል">ትምህርት ክፍል (Education)</option>
-                  <option value="አባላት ጉዳይ">አባላት ጉዳይ (Member Affairs)</option>
-                  <option value="መዝሙር ክፍል">መዝሙር ክፍል (Music)</option>
-                  <option value="ባች ክፍል">ባች ክፍል (Batch)</option>
-                  <option value="ሙያ ክፍል">ሙያ ክፍል (Skills)</option>
-                  <option value="ልማት ክፍል">ልማት ክፍል (Development)</option>
-                  <option value="ቋንቋ ክፍል">ቋንቋ ክፍል (Language)</option>
-                  <option value="መረጃ ክፍል">መረጃ ክፍል (Information)</option>
-                  <option value="ሂሳብ ክፍል">ሂሳብ ክፍል (Finance)</option>
-                  <option value="ኦዲት">ኦዲት (Audit)</option>
+                  <option value="">ይምረጡ</option>
+                  <option value="ትምህርት ክፍል">ትምህርት ክፍል</option>
+                  <option value="አባላት ጉዳይ">አባላት ጉዳይ</option>
+                  <option value="መዝሙር ክፍል">መዝሙር ክፍል</option>
+                  <option value="ባች ክፍል">ባች ክፍል</option>
+                  <option value="ሙያ ክፍል">ሙያ ክፍል</option>
+                  <option value="ልማት ክፍል">ልማት ክፍል</option>
+                  <option value="ቋንቋ ክፍል">ቋንቋ ክፍል</option>
+                  <option value="መረጃ ክፍል">መረጃ ክፍል</option>
+                  <option value="ሂሳብ ክፍል">ሂሳብ ክፍል</option>
+                  <option value="ኦዲት">ኦዲት</option>
                 </select>
               </div>
             </div>
@@ -396,25 +400,25 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
           {/* Section: Residence */}
           <div className="premium-form-section" style={{ marginBottom: '35px', padding: '25px', background: '#f8fafc', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
             <h4 style={{ margin: '0 0 20px', color: '#334155', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-              <span>📍</span> የመኖሪያ አድራሻ (Residence)
+              <span>📍</span> የመኖሪያ አድራሻ
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ክልል (Region) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ክልል *</label>
                 <input type="text" className="form-control" value={formData.region} onChange={e => handleAmharicInput('region', e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ዞን (Zone) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ዞን *</label>
                 <input type="text" className="form-control" value={formData.zone} onChange={e => handleAmharicInput('zone', e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ወረዳ (Woreda) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ወረዳ *</label>
                 <input type="text" className="form-control" value={formData.woreda} onChange={e => handleAmharicInput('woreda', e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
               <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ቀበሌ (Kebele) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>ቀበሌ *</label>
                 <input type="text" className="form-control" value={formData.kebele} onChange={e => { if (/^[\u1200-\u137F\s/0-9]*$/.test(e.target.value)) setFormData({ ...formData, kebele: e.target.value }) }} required style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
             </div>
@@ -423,7 +427,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
           {/* Section: Account & Contact */}
           <div className="premium-form-section" style={{ marginBottom: '35px', padding: '25px', background: '#f8fafc', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
             <h4 style={{ margin: '0 0 20px', color: '#334155', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-              <span>🔑</span> የመለያ እና መገናኛ (Account & Contact)
+              <span>🔑</span> የመለያ እና መገናኛ
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div className="form-group">
@@ -435,7 +439,7 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
                 <input type="email" className="form-control" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="Optional" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }} />
               </div>
             </div>
-            
+
             <div style={{ marginTop: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem', color: '#475569' }}>የተጠቃሚ ስም (Username) *</label>
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -470,9 +474,9 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '40px' }}>
-            <button 
-              type="submit" 
-              disabled={loading} 
+            <button
+              type="submit"
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '16px',
@@ -489,9 +493,9 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             >
               {loading ? 'Processing...' : 'Complete Registration'}
             </button>
-            <button 
-              type="button" 
-              onClick={onBack} 
+            <button
+              type="button"
+              onClick={onBack}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -522,27 +526,27 @@ const MemberSelfRegistration = ({ onBack, generateUsername, generatePassword, th
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
             position: 'relative'
           }} onClick={e => e.stopPropagation()}>
-            <button 
+            <button
               onClick={() => setShowNoticeModal(false)}
               style={{ position: 'absolute', top: '25px', right: '25px', border: 'none', background: '#f1f5f9', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >&times;</button>
-            
+
             <h3 style={{ marginTop: 0, paddingBottom: '20px', borderBottom: '2px solid #f1f5f9', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span>📜</span> ከመመዝገብዎ በፊት ይህንን ያንብቡ 
+              <span>📜</span> ከመመዝገብዎ በፊት ይህንን ያንብቡ
             </h3>
-            
-            <div style={{ 
+
+            <div style={{
               marginTop: '25px', fontSize: '1.1rem', lineHeight: '1.8', color: '#334155',
               padding: '25px', background: '#f8fafc', borderRadius: '20px', border: '1px solid #e2e8f0'
             }}
               dangerouslySetInnerHTML={{ __html: registrationNotice }}
             />
-            
+
             <div style={{ marginTop: '35px', textAlign: 'center' }}>
-              <button 
+              <button
                 onClick={() => setShowNoticeModal(false)}
                 className="btn btn-primary"
-                style={{ 
+                style={{
                   borderRadius: '16px', padding: '15px 50px', fontWeight: '800', fontSize: '1.1rem',
                   boxShadow: '0 4px 6px rgba(59, 130, 246, 0.3)'
                 }}

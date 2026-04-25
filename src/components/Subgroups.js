@@ -232,7 +232,7 @@ const Subgroups = ({ token, user }) => {
                                         ) : (
                                             subgroups.find(s => s._id === managingSubgroup._id)?.members?.map(m => (
                                                 <tr key={m._id}>
-                                                    <td>{m.firstName} {m.fatherName}</td>
+                                                    <td style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>{m.firstName} {m.fatherName}</td>
                                                     <td><code>{m.studentId}</code></td>
                                                     <td>{m.gender}</td>
                                                     <td>

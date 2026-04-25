@@ -794,7 +794,7 @@ const SubstituteTeachers = ({ token, setView }) => {
                   >
                     <td>
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>{teacher.name}</div>
+                        <div style={{ fontWeight: '600', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{teacher.name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{teacher.gender || '—'}</div>
                       </div>
                     </td>
@@ -802,7 +802,7 @@ const SubstituteTeachers = ({ token, setView }) => {
                     <td>{teacher.phone}</td>
                     <td>
                       <div>
-                        <div style={{ fontWeight: '500' }}>{teacher.department || '—'}</div>
+                        <div style={{ fontWeight: '500', whiteSpace: 'nowrap' }}>{teacher.department || '—'}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{teacher.batch || ''}</div>
                       </div>
                     </td>

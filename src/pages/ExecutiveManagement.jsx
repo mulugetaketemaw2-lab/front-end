@@ -440,8 +440,8 @@ const ExecutiveManagement = ({ token, currentUser, mode = 'core' }) => {
         <div className="banner-text">
           <h2 className="banner-title">
             {!isManagingSubExecs 
-              ? 'የሥራ አስፈጻሚዎች ማስተዳደሪያ (Manage Core Executives)' 
-              : `የንኡስ ተጠሪዎች ማስተዳደሪያ (Manage Sub-Executives) ${['super_admin', 'admin'].includes(currentUser?.role) ? '' : '- ' + currentUser?.departmentAmharic}`
+              ? 'የሥራ አስፈጻሚዎች ማስተዳደሪያ' 
+              : `የንኡስ ተጠሪዎች ማስተዳደሪያ ${['super_admin', 'admin'].includes(currentUser?.role) ? '' : '- ' + currentUser?.departmentAmharic}`
             }
           </h2>
           <p className="banner-subtitle">
@@ -461,7 +461,7 @@ const ExecutiveManagement = ({ token, currentUser, mode = 'core' }) => {
       <div className="card">
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <h3 className="card-title" style={{ margin: 0 }}>{!isManagingSubExecs ? 'የሥራ አስፈጻሚዎች ዝርዝር (Executives List)' : 'የንኡስ ተጠሪዎች ዝርዝር (Sub-Executives List)'}</h3>
+            <h3 className="card-title" style={{ margin: 0 }}>{!isManagingSubExecs ? 'የሥራ አስፈጻሚዎች ዝርዝር' : 'የንኡስ ተጠሪዎች ዝርዝር'}</h3>
             <span className="badge badge-primary">{executives.length}</span>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -766,17 +766,17 @@ const ExecutiveManagement = ({ token, currentUser, mode = 'core' }) => {
                         opacity: user.isActive === false ? 0.75 : 1
                       }}
                     >
-                    <td style={{ fontWeight: '600' }}>{user.name}</td>
-                    <td><span className="badge badge-success">{user.department}</span></td>
-                    <td>{user.email}</td>
-                    <td>{user.phone || '—'}</td>
-                    <td><span className="role-chip">{user.term}</span></td>
-                    <td>
+                    <td style={{ fontWeight: '500', whiteSpace: 'nowrap' }}>{user.name}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}><span className="badge badge-success">{user.department}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{user.email}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{user.phone || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}><span className="role-chip">{user.term}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span className={`status-pill ${user.isActive !== false ? 'active' : 'inactive'}`} style={{ fontSize: '0.7rem' }}>
                         {user.isActive !== false ? 'Active' : 'Suspended'}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       {user._id !== (currentUser?.id || currentUser?._id) && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleToggleStatus(user._id, user.isActive !== false); }}

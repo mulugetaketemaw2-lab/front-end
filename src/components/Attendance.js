@@ -9,12 +9,12 @@ const Attendance = ({ token, currentUser }) => {
     const targetsUsers = ['super_admin', 'admin', 'tsehafy', 'sebsabi', 'meketel_sebsabi', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'].includes(currentUser?.role);
     // targetsMembers means the user is taking attendance FOR normal Members (Subgroups)
     const targetsMembers = currentUser?.role === 'sub_executive';
-    
+
     // For specific UI/Role logic
     const isAdmin = ['super_admin', 'admin', 'sebsabi', 'meketel_sebsabi', 'tsehafy'].includes(currentUser?.role);
     const isDeptHead = ['timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'].includes(currentUser?.role);
     const canManageMeetings = isAdmin || isDeptHead;
-    
+
     const formatDateToYYYYMMDD = (d) => {
         if (!d) return "";
         const dateObj = new Date(d);
@@ -27,10 +27,10 @@ const Attendance = ({ token, currentUser }) => {
     const [members, setMembers] = useState([]);
     const [date, setDate] = useState(formatDateToYYYYMMDD(new Date()));
     const [useEthCalendar, setUseEthCalendar] = useState(true);
-    const [ethDate, setEthDate] = useState({ 
-        day: greToEth(new Date()).day, 
-        month: greToEth(new Date()).month, 
-        year: greToEth(new Date()).year 
+    const [ethDate, setEthDate] = useState({
+        day: greToEth(new Date()).day,
+        month: greToEth(new Date()).month,
+        year: greToEth(new Date()).year
     });
     const [attendances, setAttendances] = useState({});
     const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ const Attendance = ({ token, currentUser }) => {
     const [filterBatch, setFilterBatch] = useState("");
     const [availableTerms, setAvailableTerms] = useState([]);
     const [selectedTerm, setSelectedTerm] = useState("");
-    
+
     // New state for enhanced features
     const [activeTab, setActiveTab] = useState('all'); // all, present, absent, unrecorded
     const [attendanceType, setAttendanceType] = useState('learning'); // learning or meeting
@@ -127,42 +127,42 @@ const Attendance = ({ token, currentUser }) => {
         try {
             const termToUse = termParam || selectedTerm;
             const termQuery = termToUse ? `&term=${encodeURIComponent(termToUse)}` : '';
-            
+
             // Secretary/Board/Dept Head fetch Users (Staff), Sub-execs fetch Members
             const membersUrl = targetsUsers ? `/auth/users?showAll=false${termQuery}` : `/members?term=${encodeURIComponent(termToUse || '')}`;
-            
+
             const [membersRes, attRes] = await Promise.all([
                 axios.get(membersUrl, { headers: { Authorization: `Bearer ${token}` } }),
                 axios.get(`/attendance/${date}`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
 
             let fetchedMembers = membersRes.data;
-            
+
             // If fetching Users (Staff), filter for Secretary's Board View or use all for Dept Head (Sub-execs)
             if (targetsUsers) {
                 if (isAdmin) {
                     // Secretary marks the Board (13 Executive Positions)
                     const boardRoles = ['sebsabi', 'meketel_sebsabi', 'tsehafy', 'timhirt', 'abalat_guday', 'mezmur', 'bach', 'muya', 'lmat', 'kwanqwa', 'merja', 'hisab', 'audit'];
-                    
+
                     // Filter for board roles and then ensure only one person per role (Unique by Role)
                     const uniqueBoardMembers = [];
                     const seenRoles = new Set();
-                    
+
                     fetchedMembers.forEach(user => {
                         if (boardRoles.includes(user.role) && user.isActive !== false && !seenRoles.has(user.role)) {
                             uniqueBoardMembers.push(user);
                             seenRoles.add(user.role);
                         }
                     });
-                    
+
                     fetchedMembers = uniqueBoardMembers;
                     console.log(`✅ Filtered to ${fetchedMembers.length} unique board members for Secretary`);
                 }
                 // Dept Heads (isDeptHead but not isAdmin) already get filtered to sub_executives by Backend
             }
-            
+
             setMembers(fetchedMembers);
-            
+
             const attMap = {};
             attRes.data.forEach(att => {
                 const key = `${att.member?._id || att.member}-${att.type}`;
@@ -190,18 +190,18 @@ const Attendance = ({ token, currentUser }) => {
                         setMeeting(m);
                         setMeetingTitle(m.title || "");
                         setMeetingAgenda(m.agenda || "");
-                        
+
                         // If we didn't have a selectedMeetingId (initial load by date), set it now to lock it in
                         if (!selectedMeetingId) setSelectedMeetingId(m._id);
-                        
+
                         // Fetch/Map AttendanceRecord status
                         const meetingDetails = await axios.get(`/executiveMeetings/${m._id}`, { headers: { Authorization: `Bearer ${token}` } });
                         if (meetingDetails.data.attendance) {
                             const meetingAttMap = { ...attMap };
                             meetingDetails.data.attendance.forEach(rec => {
                                 const key = `${rec.userId._id || rec.userId}-meeting`;
-                                meetingAttMap[key] = { 
-                                    _id: rec._id, 
+                                meetingAttMap[key] = {
+                                    _id: rec._id,
                                     status: rec.status.toLowerCase(),
                                     isMeetingRecord: true // tag for identification
                                 };
@@ -237,18 +237,18 @@ const Attendance = ({ token, currentUser }) => {
         try {
             const key = `${memberId}-${type}`;
             const existing = attendances[key];
-            
+
             // If it's an executive/department meeting, use the executiveMeetings API
             if (canManageMeetings && type === 'meeting') {
                 let currentMeetingId = meeting?._id;
-                
+
                 // If no meeting exists yet, we must have a title/agenda to create one
                 if (!currentMeetingId) {
                     if (!meetingTitle.trim() || !meetingAgenda.trim()) {
                         toast.error("እባክዎ መጀመሪያ ስብሰባውን ይመዝግቡ (Please enter title and agenda first)");
                         return;
                     }
-                    
+
                     const newMeeting = await axios.post("/executiveMeetings", {
                         title: meetingTitle,
                         agenda: meetingAgenda,
@@ -256,20 +256,20 @@ const Attendance = ({ token, currentUser }) => {
                         time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
                         type: isAdmin ? 'executive' : 'department'
                     }, { headers: { Authorization: `Bearer ${token}` } });
-                    
+
                     currentMeetingId = newMeeting.data._id;
                     setMeeting(newMeeting.data);
                 }
-                
+
                 // Save attendance record
                 const res = await axios.post(`/executiveMeetings/${currentMeetingId}/attendance`, {
                     attendees: [{ userId: memberId, status: status.charAt(0).toUpperCase() + status.slice(1) }],
                     term: selectedTerm
                 }, { headers: { Authorization: `Bearer ${token}` } });
-                
-                setAttendances(prev => ({ 
-                    ...prev, 
-                    [key]: { status: status.toLowerCase(), isMeetingRecord: true, meetingId: currentMeetingId } 
+
+                setAttendances(prev => ({
+                    ...prev,
+                    [key]: { status: status.toLowerCase(), isMeetingRecord: true, meetingId: currentMeetingId }
                 }));
                 return;
             }
@@ -279,13 +279,13 @@ const Attendance = ({ token, currentUser }) => {
                 const res = await axios.put(`/attendance/${existing._id}`, { status }, { headers: { Authorization: `Bearer ${token}` } });
                 setAttendances(prev => ({ ...prev, [key]: res.data }));
             } else {
-                const res = await axios.post("/attendance", { 
-                    memberId, 
-                    date, 
-                    type, 
-                    status, 
+                const res = await axios.post("/attendance", {
+                    memberId,
+                    date,
+                    type,
+                    status,
                     onModel: targetsUsers ? "User" : "Member",
-                    term: selectedTerm 
+                    term: selectedTerm
                 }, { headers: { Authorization: `Bearer ${token}` } });
                 setAttendances(prev => ({ ...prev, [key]: res.data }));
             }
@@ -297,7 +297,7 @@ const Attendance = ({ token, currentUser }) => {
     const handleDeleteMeeting = async () => {
         if (!meeting?._id) return;
         if (!window.confirm("ይህንን ስብሰባ ሙሉ በሙሉ ለማጥፋት እርግጠኛ ነዎት? (Are you sure you want to delete this meeting?)")) return;
-        
+
         setIsDeletingMeeting(true);
         try {
             await axios.delete(`/executiveMeetings/${meeting._id}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -333,15 +333,15 @@ const Attendance = ({ token, currentUser }) => {
         setMeeting(m);
         setMeetingTitle(m.title || "");
         setMeetingAgenda(m.agenda || "");
-        
+
         // Convert the meeting date to GC string for the state using the safe formatter
         const mDate = formatDateToYYYYMMDD(new Date(m.date));
         setDate(mDate);
-        
+
         // Update ethDate state to match
         const eth = greToEth(new Date(m.date));
         setEthDate({ day: eth.day, month: eth.month, year: eth.year });
-        
+
         setShowHistory(false);
     };
 
@@ -350,7 +350,7 @@ const Attendance = ({ token, currentUser }) => {
             toast.error("እባክዎ ርዕስ እና አጀንዳ ያስገቡ (Please enter title and agenda)");
             return;
         }
-        
+
         setIsSavingMeeting(true);
         try {
             if (meeting) {
@@ -383,14 +383,14 @@ const Attendance = ({ token, currentUser }) => {
         try {
             if (canManageMeetings && type === 'meeting') {
                 let currentMeetingId = meeting?._id;
-                
+
                 if (!currentMeetingId) {
                     if (!meetingTitle.trim() || !meetingAgenda.trim()) {
                         toast.error("እባክዎ መጀመሪያ ስብሰባውን ይመዝግቡ (Please enter title and agenda first)");
                         setLoading(false);
                         return;
                     }
-                    
+
                     const newMeeting = await axios.post("/executiveMeetings", {
                         title: meetingTitle,
                         agenda: meetingAgenda,
@@ -398,7 +398,7 @@ const Attendance = ({ token, currentUser }) => {
                         time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
                         type: isAdmin ? 'executive' : 'department'
                     }, { headers: { Authorization: `Bearer ${token}` } });
-                    
+
                     currentMeetingId = newMeeting.data._id;
                     setMeeting(newMeeting.data);
                 }
@@ -606,31 +606,31 @@ const Attendance = ({ token, currentUser }) => {
                             </div>
                             {useEthCalendar ? (
                                 <div className="att-date-inputs">
-                                    <select 
-                                        value={ethDate.month} 
+                                    <select
+                                        value={ethDate.month}
                                         onChange={e => { setSelectedMeetingId(null); setEthDate(p => ({ ...p, month: e.target.value })); }}
                                         className="att-date-select"
                                     >
                                         {ETHIOPIAN_MONTHS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                     </select>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         value={ethDate.day}
                                         onChange={e => { setSelectedMeetingId(null); setEthDate(p => ({ ...p, day: e.target.value })); }}
                                         min="1" max="31"
                                         className="att-date-num"
                                     />
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         value={ethDate.year}
                                         onChange={e => { setSelectedMeetingId(null); setEthDate(p => ({ ...p, year: e.target.value })); }}
                                         className="att-date-num att-date-year"
                                     />
                                 </div>
                             ) : (
-                                <input 
-                                    type="date" 
-                                    value={date} 
+                                <input
+                                    type="date"
+                                    value={date}
                                     onChange={(e) => { setSelectedMeetingId(null); setDate(e.target.value); }}
                                     className="att-date-gc"
                                 />
@@ -656,7 +656,7 @@ const Attendance = ({ token, currentUser }) => {
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <button 
+                            <button
                                 className="att-history-toggle-btn"
                                 onClick={() => { setShowHistory(true); fetchMeetingHistory(); }}
                                 title="የቀድሞ ስብሰባዎች ዝርዝር"
@@ -664,7 +664,7 @@ const Attendance = ({ token, currentUser }) => {
                                 📜 History
                             </button>
                             {meeting && (
-                                <button 
+                                <button
                                     className={`att-delete-btn ${isDeletingMeeting ? 'loading' : ''}`}
                                     onClick={handleDeleteMeeting}
                                     disabled={isDeletingMeeting}
@@ -673,7 +673,7 @@ const Attendance = ({ token, currentUser }) => {
                                     {isDeletingMeeting ? '...' : '🗑️ Delete'}
                                 </button>
                             )}
-                            <button 
+                            <button
                                 className={`att-save-header-btn ${isSavingMeeting ? 'loading' : ''}`}
                                 onClick={handleUpdateMeetingHeader}
                                 disabled={isSavingMeeting}
@@ -685,7 +685,7 @@ const Attendance = ({ token, currentUser }) => {
                     <div className="att-agenda-body">
                         <div className="att-input-group">
                             <label>የስብሰባው ርዕስ (Meeting Title)</label>
-                            <textarea 
+                            <textarea
                                 value={meetingTitle}
                                 onChange={e => setMeetingTitle(e.target.value)}
                                 className="att-agenda-title-input"
@@ -694,7 +694,7 @@ const Attendance = ({ token, currentUser }) => {
                         </div>
                         <div className="att-input-group">
                             <label>የመወያያ አርዕስት (Discussion Points / Agenda)</label>
-                            <textarea 
+                            <textarea
                                 value={meetingAgenda}
                                 onChange={e => setMeetingAgenda(e.target.value)}
                                 className="att-agenda-text-input"
@@ -729,9 +729,9 @@ const Attendance = ({ token, currentUser }) => {
                 <div className="att-search-group">
                     <div className="att-search-wrap">
                         <span className="att-search-icon">🔍</span>
-                        <input 
-                            type="text" 
-                            placeholder="Search by name..." 
+                        <input
+                            type="text"
+                            placeholder="Search by name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="att-search-input"
@@ -862,12 +862,12 @@ const Attendance = ({ token, currentUser }) => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            
+
                                             {/* Learning Block (Conditional for non-execs) */}
                                             {!isExec && (
                                                 <>
                                                     <td className="att-btn-cell">
-                                                        <button 
+                                                        <button
                                                             onClick={() => markAttendance(m._id, 'learning', 'present')}
                                                             className={`att-toggle att-toggle-present ${lStatus === 'present' ? 'active' : ''}`}
                                                         >
@@ -875,7 +875,7 @@ const Attendance = ({ token, currentUser }) => {
                                                         </button>
                                                     </td>
                                                     <td className="att-btn-cell">
-                                                        <button 
+                                                        <button
                                                             onClick={() => markAttendance(m._id, 'learning', 'absent')}
                                                             className={`att-toggle att-toggle-absent ${lStatus === 'absent' ? 'active' : ''}`}
                                                         >
@@ -887,7 +887,7 @@ const Attendance = ({ token, currentUser }) => {
 
                                             {/* Meeting Block */}
                                             <td className="att-btn-cell">
-                                                <button 
+                                                <button
                                                     onClick={() => markAttendance(m._id, 'meeting', 'present')}
                                                     className={`att-toggle att-toggle-present ${mStatus === 'present' ? 'active' : ''}`}
                                                 >
@@ -895,19 +895,19 @@ const Attendance = ({ token, currentUser }) => {
                                                 </button>
                                             </td>
                                             <td className="att-btn-cell">
-                                                <button 
+                                                <button
                                                     onClick={() => markAttendance(m._id, 'meeting', 'absent')}
                                                     className={`att-toggle att-toggle-absent ${mStatus === 'absent' ? 'active' : ''}`}
                                                 >
                                                     {mStatus === 'absent' ? '✗' : '○'}
                                                 </button>
                                             </td>
-                                            
+
                                             {/* Management Specific: Permission and Stats */}
                                             {canManageMeetings && (
                                                 <>
                                                     <td className="att-btn-cell">
-                                                        <button 
+                                                        <button
                                                             onClick={() => markAttendance(m._id, 'meeting', 'excused')}
                                                             className={`att-toggle att-toggle-excused ${mStatus === 'excused' ? 'active' : ''}`}
                                                             title="Mark as Permission (ፈቃድ)"
@@ -916,8 +916,8 @@ const Attendance = ({ token, currentUser }) => {
                                                         </button>
                                                     </td>
                                                     <td style={{ textAlign: 'center', minWidth: '80px' }}>
-                                                        <span style={{ 
-                                                            fontSize: '0.85rem', 
+                                                        <span style={{
+                                                            fontSize: '0.85rem',
                                                             color: (absenceStats[m._id] || 0) > 3 ? '#ef4444' : '#64748b',
                                                             fontWeight: '900',
                                                             display: 'inline-block',
@@ -1005,11 +1005,11 @@ const Attendance = ({ token, currentUser }) => {
                             <div>
                                 <h3 className="att-sidebar-title">📜 የስብሰባዎች ታሪክ</h3>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                                    <select 
+                                    <select
                                         className="att-history-month-select"
                                         value={historyMonth}
                                         onChange={e => setHistoryMonth(e.target.value)}
-                                        style={{ 
+                                        style={{
                                             padding: '4px 8px', borderRadius: '8px', border: '1px solid #e2e8f0',
                                             fontSize: '0.75rem', fontWeight: '700', outline: 'none'
                                         }}
@@ -1024,7 +1024,7 @@ const Attendance = ({ token, currentUser }) => {
                             </div>
                             <button className="att-sidebar-close" onClick={() => setShowHistory(false)}>✕</button>
                         </div>
-                        
+
                         {/* Monthly Summary Bar */}
                         <div style={{ padding: '12px 24px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '15px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1049,7 +1049,7 @@ const Attendance = ({ token, currentUser }) => {
                                             <div key={m._id} className="att-history-item" onClick={() => selectMeetingFromHistory(m)} style={{ animationDelay: `${i * 0.05}s` }}>
                                                 <div className="att-history-date">
                                                     <span className="att-h-day">{mEth.day}</span>
-                                                    <span className="att-h-month">{mEth.monthAmharicShort || mEth.monthAmharic.slice(0,3)}</span>
+                                                    <span className="att-h-month">{mEth.monthAmharicShort || mEth.monthAmharic.slice(0, 3)}</span>
                                                 </div>
                                                 <div className="att-history-details">
                                                     <div className="att-h-title">{m.title}</div>
